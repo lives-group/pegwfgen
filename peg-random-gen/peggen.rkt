@@ -1,8 +1,6 @@
 #lang racket
 ;(require redex)
 (require  racket/set)
-(require "./peg.rkt")
-(require "./WFverf.rkt")
 (require rackcheck)
 
 ; Processo de test de GitHub, ver como ele faz isso sozinho
@@ -158,7 +156,6 @@
  ) 
 
 
-
 (define (batch-update Δ Γ var list-var)
   (foldr (lambda (lvar Δ) (Δ-up Δ lvar Γ var)) Δ list-var )
   )
@@ -166,9 +163,6 @@
 (define (initΔ-1 x)
       (make-immutable-hash (map (lambda (t) [list t t] ) x) ) 
   )
-
-
-  
 
 (define (randPEG vars Σi p)
         (let* [(ts  (sample gen:boolean (length vars) myGen))
@@ -207,10 +201,6 @@
   )
 )
 
-(define Γ0 '( (A #f (B C)) (B #t (C)) (C #t ()) ))
-(define Γ1 '( (A #f ()) ) )
-(define Γ2 '( (A #f ()) (B #f ()) ) )
-(define Γ3 '( (A #f (B C)) (B #t ()) (C #t ()) (D #t (C)) ))
 
 
 ;(sample (genPegExpr null '() '(0 1)  #f 3) 10)
@@ -228,52 +218,21 @@
         )
   )
 
-(define Γ-test-0 '( (A #t ())
-                    (B #f ())
+(define (closure xs Γ var)
+  (let* ([x (findf (lambda (e) (eq? (car e) var)) Γ) ]
+         [zs (if x (remv* xs (caddr x)) null)])
+    (if x
+        (foldr append zs (map (lambda (z) (closure (append xs zs) Γ z)) zs))
+        xs )
+    )
+  )
+          
+        
+        
+
+(define Γ-test-0 '( (A #t (B))
+                    (B #f (C D))
                     (C #t ())
                     (D #t ()) ) )  
 (define Δ-test-0 (initΔ-1 '(A B C D) ) )
 
-; Loopinf is-WF.
-;
-; '((B (• (* 0) (/ A ε)) (A (• (• ε 1) (• B ε)) ∅)) (• (/ 1 A) (! 1)) ((A #f ()) (B #t (A))))
-; '(0)'(1 ⊥)'(1). Interactions disabled; out of memory
-;
-; A → ε1Bε      
-; B → 0*(A / ε)
-;
-;(1 / A) !1
-;
-;(is-WF '(B (• (* 0) (/ A ε)) (A (• (• ε 1) (• B ε)) ∅)) '(• (/ 1 A) (! 1)) '() )
-;
-;'((D (! (• (• 0 1) (/ 0 0)))
-;  (C (* (• (• 0 1) (• ε 0)))
-;  (B (• (/ (• C 0) (* 0)) (• (• C ε) (/ 1 0)))
-;  (A (/ (/ (• B 0) (/ 1 D)) (• (/ B 0) (• C D))) ∅))))
-;
-; A → B0
-;   / (1/ D)
-;   / (B/0)CD
-; B → (C0 / *0) C ε (1 / 0)
-; C → (01ε0)*
-; D → !(01(0 / 0))
-;(* (• (/ B B) (/ B 0)))
-;
-;
-;((A #t (C D B)) (B #f (C)) (C #t ()) (D #t ())))
-;
-;(randPEG '(A B) '(0 1) 1)
-;'((B (• ε 0) (A (• 0 ε) ∅)) (• 0 ε) ((A #f ()) (B #f ())))
-;pegar o corpo de B e verificar se ele é = (B #f ())
-
-;(randPEG '(A B) '(0 1) 2)
-;
-;
-;((X2 (/ (• ε 2) (• X0 ε))
-; (X1 (/ (/ 2 X2) (/ 3 X2))
-; (X0 (/ (* 2) (/ 3 X1)) ∅)))
-;
-; (/ (* 0) (/ ε X0))
-;
-; ((X0 #t (X0 X2 X1)) (X1 #t (X1 X0 X2)) (X2 #t (X0 X1 X2)))
-;

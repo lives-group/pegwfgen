@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../peg/lang/peg.rkt")
+(require "./peggen.rkt")
 
 (module+ test
   (require rackunit))
