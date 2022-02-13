@@ -1,24 +1,27 @@
 #lang racket
-;(require redex)
+
 (require  racket/set)
 (require rackcheck)
-
-; Processo de test de GitHub, ver como ele faz isso sozinho
-; 
+(require rackunit)
+(provide genPegExpr
+         gen:grm
+         gen:Γ
+         gen:peg
+         gen:var
+         gen:symbolVar
+         no-left-recursion
+         obey-constraint)
 ;
 
 (define myGen (make-pseudo-random-generator))
 
-(define (h n)
-        (- n 1)
-  )
-
+(define (h n) (- n 1) )
 
 (define (genPegExpr Γ Δ Σ b p)
        (cond
-             [(equal? p 0)  (gen:one-of (append (mkListVar Γ Δ b)
+             [(equal? p 0)  (gen:one-of (append (mkListVar Γ Δ b) 
                                                 (if b
-                                                    (list (list 'ε #t '()) )  ; Falta possibilidades de termianis AQUI -- Não falta não !
+                                                    (list (list 'ε #t '()) )
                                                     (map (lambda (x) (list x #f '())) Σ) )
                                          )) ]
              [(and (> p 0) b)    (gen:choice (gen:bind (genPegExpr Γ Δ Σ b (h p))
@@ -60,7 +63,7 @@
      ;(display "\nmkListVar: DELTA = ")
      ;(display Δ)
      ;(display "\n")
-     (map (lambda (y) (list (car y) (cadr y) (append (caddr y) (list (car y)) ) ))
+     (map (lambda (y) (list (car y) (cadr y) (set-union (caddr y) (list (car y)) ) ))
           (filter (lambda (x) (and (eq? (cadr x) b) (not (member (car x) Δ))) ) Γ)
      )
  )
@@ -84,47 +87,33 @@
         (list `(! ,(car e1) ) #t ( caddr e1 ) )
 )
 
-(define (genGrammar G Γ Δ Σ n pmax)
+; (gen:grm (list (car x) (car t) G)  (Γ-up Γ (car x) (cadr t) (caddr t))  (Δ-up-old Δ x t) Σ (+ n 1) pmax))
+(define (gen:grm G Γ Δ Σ n pmax)
        (if (>= n (length Γ))
-           [begin
-             (display "\n and Last Δ = ")
-             (display Δ)
-             (display "\n")
-             (list G Γ) ]
-           (let* ([x (list-ref Γ n)]
-                  [Δ_x (hash-ref Δ (car x)) ]
-                  [t   (car (sample (genPegExpr Γ Δ_x Σ (cadr x) pmax) 1) ) ]
-                  [Δ1  (foldr (lambda (z Δ2) (hash-update Δ2 z (lambda (l) (set-union l (list (car x))  )  ) ) ) Δ (caddr t) )]
-                  [Γ1  (Γ-up Γ (car x) (cadr t) (caddr t)) ])
-
-                  ;(display "Body ")
-                  ;(display t)
-                  ;(display " Generated for " )
-                  ;(display x)
-                  ;(display "\n With Γ = ")
-                  ;(display Γ)
-                  ;(display "\n and Δ = ")
-                  ;(display Δ)
-                  ;(display "\n and Δ_x = ")
-                  ;(display Δ_x)
-                  ;(display "\n")
-             
-                  (genGrammar (list (car x) (car t) G) Γ1 Δ1 Σ (+ n 1) pmax)
-           )
+              (gen:const (list G Γ))
+              (gen:let ([x   (gen:const (list-ref Γ n))]
+                        [Δ_x (gen:const (hash-ref Δ (car x)) )]
+                        [t   (genPegExpr Γ Δ_x Σ (cadr x) pmax) ])            
+                       (gen:grm (list (car x) (car t) G) (Γ-up Γ (car x) (cadr t) (caddr t)) (batch-update Δ Γ (car x) (caddr t)) Σ (+ n 1) pmax)
+              )
         )
  )
 
 (define (Γ-item-up x y)
         (list (car x) (cadr x) (set-union (caddr x) y ))
-
   )
 
 (define (Γ-up xs y b ty)
         (cond [(null? xs) null]
               [(eq? (car (car xs)) y) (cond [(eq? (cadr (car xs)) b)  (cons (list y b (set-union ty (caddr (car xs)))) (Γ-up (rest xs) y b ty))]
-                                            [#t  (print (car xs))
-                                                 (print " attempt to update with ")
-                                                 (println b)]
+                                            [#t  (print "Inconsistency attempt to update Γ: xs=")
+                                                 (print xs)
+                                                 (print "  y  = ")
+                                                 (print (list y b ty))
+                                                 (print " attempt to update head nullable field with ")
+                                                 (println b)
+                                                 (rest xs)
+                                             ] 
                                       )] 
               [(member y (caddr (car xs)) )  (cons (Γ-item-up (car xs) ty) (Γ-up (rest xs) y b ty))]
               [#t (cons (car xs) (Γ-up (rest xs) y b ty)) ]
@@ -133,17 +122,11 @@
 
 (define (elem? x xs)
     (and (not (null? xs)) (or (eq? x (car xs)) (elem? x (cdr xs)) ) )
-      )
+ )
 
-; Still worng
-#;(define (Δ-up Δ key Γ var) 
-  (foldr (lambda (Γval Δ)  (hash-update Δ key (lambda (hval) (set-union (list (car Γval) var) hval)) null) ) 
-         Δ
-         (filter (lambda (ΓEntry) (elem? var (caddr ΓEntry) ) ) Γ) )
-    )
-
+; Key -> Var
+; var in headSet(key) 
 (define (Δ-up Δ key Γ var) 
-
    (foldr (lambda (Γval Δ)
                   (hash-update Δ key (lambda (hval) (set-union (list (car Γval) var) hval)) null) ) 
          ( hash-update Δ key (lambda (hv) (set-union hv (list var) ) ) )
@@ -151,10 +134,8 @@
 
 
 (define (initΔ Γ)
-  (foldr (lambda (t Δ) (batch-update Δ Γ (car t) (caddr t) )) (initΔ-1 (map car Γ))  Γ)
-  
+  (foldr (lambda (t Δ) (batch-update Δ Γ (car t) (caddr t) )) (initΔ-1 (map car Γ))  Γ)  
  ) 
-
 
 (define (batch-update Δ Γ var list-var)
   (foldr (lambda (lvar Δ) (Δ-up Δ lvar Γ var)) Δ list-var )
@@ -164,26 +145,57 @@
       (make-immutable-hash (map (lambda (t) [list t t] ) x) ) 
   )
 
-(define (randPEG vars Σi p)
-        (let* [(ts  (sample gen:boolean (length vars) myGen))
-               (bol  (car (sample gen:boolean (length vars) myGen)))
-               (Γi (zipWith (lambda (v b) (list v b null)  ) vars ts))
-               (Δi (initΔ Γi))
-               (GΓ (genGrammar '∅ Γi Δi Σi 0 p) )
-               (e0  (car (sample (genPegExpr (cadr GΓ) null Σi bol p) 1)) )]
-              (list (car GΓ) (car e0) (cadr GΓ) ))
+
+(define (gen:Γ  maxVars [varSize 0])
+  (gen:let ([vs (gen:list (gen:symbolVar varSize) #:max-length maxVars )]
+            [ts (gen:repeat gen:boolean (length vs))])
+           (gen:const (zipWith (lambda (v b) (list v b null) ) (remove-duplicates vs) ts ) ))
   )
 
-(define (randPEG-ERR Σi p)
-        (let* [(vars (list 'X0 'X1 'X2) )
-               (ts   (list #t #t #t ))
-               (bol  #t)
-               (Γi (zipWith (lambda (v b) (list v b null)  ) vars ts))
-               (Δi (initΔ Γi))
-               (GΓ (genGrammar '∅ Γi Δi Σi 0 p) )
-               (e0  (car (sample (genPegExpr (cadr GΓ) null Σi bol p) 1)) )]
-              (list (car GΓ) (car e0) (cadr GΓ) ))
+(define (gen:peg maxVars maxLits maxDepth)
+  (gen:let ([Γ (gen:Γ maxVars)]
+            [n (gen:integer-in 1 maxLits) ]
+            [Σ (gen:const (list-from-to 0 n))]
+            [p (gen:integer-in 0 maxDepth)]
+            [GΓ (gen:grm '∅ Γ (initΔ Γ) Σ 0 p)]
+            [b gen:boolean ]
+            [e0 (genPegExpr (cadr GΓ) null Σ b p)])
+           (gen:const (list (car GΓ) (car e0) (cadr GΓ)) )
+           )
   )
+
+
+(define (list-from-to l u)
+  (if (> l u)
+      null
+      (cons l (list-from-to (+ 1 l) u))
+      )
+  )
+
+(define (gen:listNat n k)
+  (if (eq? n 0) (gen:bind (gen:integer-in 0 k) (lambda (e) (gen:const (list e))) )
+      (gen:bind (gen:listNat (- n 1) k)
+                (lambda (xs) (gen:bind ( gen:integer-in 0 k)
+                                      (lambda (x) (gen:const (list* x xs)) ) ))))
+  )
+
+(define (gen:repeat g n)
+  (if (eq? n 0)
+      (gen:const null)
+      (gen:bind (gen:repeat g (- n 1) )
+                (lambda (xs) (gen:bind g
+                                       (lambda (x) (gen:const (cons x xs)) ) ))))
+  )
+
+
+(define (gen:var n)
+  (gen:map (gen:listNat n 23) (lambda (s) (list->string (map (lambda (z) (integer->char (+ z 65))) s ))  ) )
+  )
+
+(define (gen:symbolVar n)
+  (gen:map (gen:listNat n 23) (lambda (s) (string->symbol (list->string (map (lambda (z) (integer->char (+ z 65))) s )))  ) )
+  )
+
 
 (define (zip xs ys)
   (cond
@@ -204,35 +216,64 @@
 
 
 ;(sample (genPegExpr null '() '(0 1)  #f 3) 10)
-(define (up2 n) (if (<= n 0) (list 0) (cons 0 (up2 (- n 1)) ) ))
+;(define (up2 n) (if (<= n 0) (list 0) (cons 0 (up2 (- n 1)) ) ))
 
-(define (runTest v Σ p n)
-        (for ([x n])
-             
-             (let ([pg (randPEG-ERR Σ p) ])
-                  (println pg)
-                  (print "Grammar: ")
-                  (println (car pg))
-                  (display "\n")
-              )
-        )
+
+(define (circle? xs ys Γ)
+  (if (null? xs)
+      #f
+      (or (elem? (car xs) ys)
+          (circle? (append (cdr xs) (caddr (Γ-val Γ (car xs) ))) (cons (car xs) ys) Γ)
+      ) )
   )
 
-(define (closure xs Γ var)
-  (let* ([x (findf (lambda (e) (eq? (car e) var)) Γ) ]
-         [zs (if x (remv* xs (caddr x)) null)])
-    (if x
-        (foldr append zs (map (lambda (z) (closure (append xs zs) Γ z)) zs))
-        xs )
-    )
+(define (circled? x ys Γ)
+  (if (null? (caddr (Γ-val Γ x) ))
+      #f
+      (or (elem?  x ys)
+          (ormap (lambda (z) (circled? z (cons x ys) Γ)) (caddr (Γ-val Γ x))) 
+      ) )
   )
-          
-        
+
+
+
+#;(define (naive-test vars Σ p n)
+     (for ([k n])
+          (let ( [ws (last (randPEG vars Σ p)) ] )
+            (if (ormap (lambda (x) (circled? (car x) '() ws))  ws )
+                (begin (display ws) (display "\n"))
+                (display "ok\n")
+                )
+            )
+      )
+  )
         
 
-(define Γ-test-0 '( (A #t (B))
-                    (B #f (C D))
+(define Γ-test-0 '( (A #t ())
+                    (B #f ())
                     (C #t ())
                     (D #t ()) ) )  
 (define Δ-test-0 (initΔ-1 '(A B C D) ) )
 
+(define g '((A #t ()) (B #t (A C)) (C #t (A))) )
+
+(define g2 '( (A #f ())  (B #f ()) (C #t ()) ) )
+(define g2-1 '((A #f (B C)) (B #f ()) (C #t ())) )
+(define d2-1 '#hash((A . (A)) (B . (A B)) (C . (A C))) )
+
+(define g1 '((A #t (B)) (B #t (A C)) (C #t (A))) )
+
+(define (sampleList list)
+  (if (null? list)
+      null
+      (if (>= (random 0 99) 50) (cons (car list) (sampleList (cdr list))) (sampleList (cdr list))  ))
+  )
+(define-property no-left-recursion ([peg  (gen:peg 3 5 2)])
+    (check-equal? (ormap (lambda (x) (circled? (car x) '() (last peg))) (last peg)) #f)
+  )
+
+(define-property obey-constraint ( [Γ (gen:Γ 3)]
+                                   [Δ  (gen:const (sampleList (map car Γ ) ) ) ]
+                                   [peg  (genPegExpr Γ Δ '(0 1 2) #f 2 )])
+    (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (last peg)) #t)
+  )

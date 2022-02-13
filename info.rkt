@@ -1,6 +1,6 @@
 #lang info
-(define collection "peg-random-gen")
-(define deps '("base" "rackcheck"))
+(define collection "peg-gen")
+(define deps '("base" "rackcheck" "rackunit"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/peg-random-gen.scrbl" ())))
 (define pkg-desc "Type safe (and thus well formed) random peg generator")
