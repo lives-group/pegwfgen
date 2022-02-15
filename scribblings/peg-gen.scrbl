@@ -1,20 +1,18 @@
 #lang scribble/manual
 
-
+(@require[ scribble/example
+          "../peg-gen.rkt"
+          @for-label[racket/base
+                     racket/contract
+                     racket/string
+                     rackcheck
+                     rackunit]])
 
 @title{peggen}
 @author{E. M. Cardoso}
 
 @defmodule[peg-gen]
 
-
-(@require[ scribble/example
-          @for-label[racket/base
-                     racket/contract
-                     racket/string
-                     rackcheck
-                     rackunit
-                     "../peg-gen.rkt"]])
 
 @(begin
   (define ev (make-base-eval))
