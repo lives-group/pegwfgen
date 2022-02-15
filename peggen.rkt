@@ -3,12 +3,15 @@
 (require  racket/set)
 (require rackcheck)
 (require rackunit)
-(provide genPegExpr
+(require scribble/srcdoc
+         (for-doc racket/base scribble/manual))
+(provide gen:expr
          gen:grm
          gen:Γ
          gen:peg
          gen:var
          gen:symbolVar
+         initΔ
          no-left-recursion
          obey-constraint)
 ;
@@ -17,32 +20,32 @@
 
 (define (h n) (- n 1) )
 
-(define (genPegExpr Γ Δ Σ b p)
+(define (gen:expr Γ Δ Σ b p)
        (cond
              [(equal? p 0)  (gen:one-of (append (mkListVar Γ Δ b) 
                                                 (if b
                                                     (list (list 'ε #t '()) )
                                                     (map (lambda (x) (list x #f '())) Σ) )
                                          )) ]
-             [(and (> p 0) b)    (gen:choice (gen:bind (genPegExpr Γ Δ Σ b (h p))
-                                                       (lambda (t)  (gen:bind (genPegExpr Γ Δ Σ b (h p)) (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
-                                             (gen:bind (genPegExpr Γ Δ Σ #t (h p))
-                                                       (lambda (t)  (gen:bind (genPegExpr Γ Δ Σ (car (sample gen:boolean 1 myGen)) (h p))
+             [(and (> p 0) b)    (gen:choice (gen:bind (gen:expr Γ Δ Σ b (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ b (h p)) (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
+                                             (gen:bind (gen:expr Γ Δ Σ #t (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (car (sample gen:boolean 1 myGen)) (h p))
                                                                               (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
-                                             (gen:bind (genPegExpr Γ Δ Σ #f (h p))
-                                                       (lambda (t)  (gen:bind (genPegExpr Γ Δ Σ #t (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
-                                             (gen:bind (genPegExpr Γ Δ Σ #f (h p))
+                                             (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #t (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
+                                             (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t) (gen:const (mkNot t) ) ))
-                                             (gen:bind (genPegExpr Γ Δ Σ #f (h p))
+                                             (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t) (gen:const (mkKle t) ) ))
                                   )]
-             [(and (> p 0) (not b))  (gen:choice (gen:bind (genPegExpr Γ Δ Σ #t (h p))
-                                                       (lambda (t)  (gen:bind (genPegExpr Γ Δ Σ #f (h p)) (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
-                                                 (gen:bind (genPegExpr Γ Δ Σ #f (h p))
-                                                           (lambda (t)  (gen:bind (genPegExpr Γ Δ Σ (car (sample gen:boolean 1 myGen)) (h p))
+             [(and (> p 0) (not b))  (gen:choice (gen:bind (gen:expr Γ Δ Σ #t (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p)) (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
+                                                 (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                           (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (car (sample gen:boolean 1 myGen)) (h p))
                                                                                   (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
-                                                 (gen:bind (genPegExpr Γ Δ Σ #f (h p))
-                                                           (lambda (t)  (gen:bind (genPegExpr Γ Δ Σ #f (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
+                                                 (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                           (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
                                   )]
            )  
 )
@@ -93,7 +96,7 @@
               (gen:const (list G Γ))
               (gen:let ([x   (gen:const (list-ref Γ n))]
                         [Δ_x (gen:const (hash-ref Δ (car x)) )]
-                        [t   (genPegExpr Γ Δ_x Σ (cadr x) pmax) ])            
+                        [t   (gen:expr Γ Δ_x Σ (cadr x) pmax) ])            
                        (gen:grm (list (car x) (car t) G) (Γ-up Γ (car x) (cadr t) (caddr t)) (batch-update Δ Γ (car x) (caddr t)) Σ (+ n 1) pmax)
               )
         )
@@ -159,7 +162,7 @@
             [p (gen:integer-in 0 maxDepth)]
             [GΓ (gen:grm '∅ Γ (initΔ Γ) Σ 0 p)]
             [b gen:boolean ]
-            [e0 (genPegExpr (cadr GΓ) null Σ b p)])
+            [e0 (gen:expr (cadr GΓ) null Σ b p)])
            (gen:const (list (car GΓ) (car e0) (cadr GΓ)) )
            )
   )
@@ -215,7 +218,7 @@
 
 
 
-;(sample (genPegExpr null '() '(0 1)  #f 3) 10)
+;(sample (gen:expr null '() '(0 1)  #f 3) 10)
 ;(define (up2 n) (if (<= n 0) (list 0) (cons 0 (up2 (- n 1)) ) ))
 
 
@@ -274,6 +277,6 @@
 
 (define-property obey-constraint ( [Γ (gen:Γ 3)]
                                    [Δ  (gen:const (sampleList (map car Γ ) ) ) ]
-                                   [peg  (genPegExpr Γ Δ '(0 1 2) #f 2 )])
+                                   [peg  (gen:expr Γ Δ '(0 1 2) #f 2 )])
     (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (last peg)) #t)
   )

@@ -1,5 +1,0 @@
-language: racket
-
-env:
- - RACKET_VERSION=6.0
- - RACKET_VERSION=HEAD
