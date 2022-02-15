@@ -1,10 +1,9 @@
 #lang racket
 
-(require  racket/set)
+(require racket/set)
 (require rackcheck)
 (require rackunit)
-(require scribble/srcdoc
-         (for-doc racket/base scribble/manual))
+
 (provide gen:expr
          gen:grm
          gen:Γ
@@ -14,7 +13,6 @@
          initΔ
          no-left-recursion
          obey-constraint)
-;
 
 (define myGen (make-pseudo-random-generator))
 

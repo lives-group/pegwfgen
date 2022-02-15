@@ -1,21 +1,24 @@
 #lang scribble/manual
-@require[ scribble/example
-          @for-label["../peggen.rkt"
-                     racket/base
+
+
+
+@title{peggen}
+@author{E. M. Cardoso}
+
+@defmodule[peg-gen]
+
+
+(@require[ scribble/example
+          @for-label[racket/base
                      racket/contract
                      racket/string
                      rackcheck
-                     rackunit]]
-
-
-@title{peg-gen}
-@author{E. M. Cardoso}
-
-@defmodule[peg-gen/doc]
+                     rackunit
+                     "../peg-gen.rkt"]])
 
 @(begin
   (define ev (make-base-eval))
-  (ev '(require rackcheck racket/list racket/stream rackunit "../pegwfgen/peggen.rkt"))
+  (ev '(require rackcheck racket/list racket/stream rackunit "../pegwfgen/peg-gen.rkt"))
   (define-syntax-rule (ex body ...)
     (begin
      (random-seed 1337)
@@ -93,8 +96,6 @@ The output of the generator is a list of triple (G, e, Context)
              @item{Σ: is an alphabet}
              @item{b: Should be #t whenever the generated expression must be nullable.}
              @item{p: Depth of the expression. If p is 0, only generate terminals or allowed variables. Samples @racket[n] values from @racket[g].}]
-   
-  
 }
 
 
