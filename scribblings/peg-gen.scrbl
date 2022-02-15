@@ -1,7 +1,7 @@
 #lang scribble/manual
 
 (@require[ scribble/example
-          "../peg-gen.rkt"
+          peg-gen
           @for-label[racket/base
                      racket/contract
                      racket/string
@@ -16,7 +16,7 @@
 
 @(begin
   (define ev (make-base-eval))
-  (ev '(require rackcheck racket/list racket/stream rackunit "../pegwfgen/peg-gen.rkt"))
+  (ev '(require rackcheck racket/list racket/stream rackunit peg-gen))
   (define-syntax-rule (ex body ...)
     (begin
      (random-seed 1337)
