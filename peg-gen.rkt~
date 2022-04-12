@@ -4,7 +4,6 @@
 (require rackcheck)
 (require rackunit)
 
-
 (provide gen:expr
          gen:grm
          gen:Γ
@@ -28,14 +27,13 @@
                                          )) ]
              [(and (> p 0) b)    (gen:choice (gen:bind (gen:expr Γ Δ Σ b (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ b (h p)) (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
-                                             (gen:bind (gen:tuple (gen:expr Γ Δ Σ #t (h p)) gen:boolean)
-                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (cadr t) (h p))
-                                                                              (lambda (s) (gen:const  (mkAlt (car t) s) )) ) ) )
+                                             (gen:bind (gen:expr Γ Δ Σ #t (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (car (sample gen:boolean 1 myGen)) (h p))
+                                                                              (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #t (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
-                                             (gen:bind gen:boolean
-                                                       (lambda (rb) (gen:bind (gen:expr Γ Δ Σ rb (h p))
-                                                                              (lambda (t) (gen:const (mkNot t) ) ) ) ) )
+                                             (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                       (lambda (t) (gen:const (mkNot t) ) ))
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t) (gen:const (mkKle t) ) ))
                                   )]
@@ -200,7 +198,7 @@
   )
 
 
-#;(define (zip xs ys)
+(define (zip xs ys)
   (cond
        [(null? xs) null]
        [(null? ys) null]
@@ -211,7 +209,7 @@
 (define (zipWith func xs ys)
   (cond
        [(null? xs) null]
-       [(null? ys) null ]
+       [(null? ys) null]
        [#t (cons (func (car xs) (car ys) ) (zipWith func (cdr xs) (cdr ys) ) )]
   )
 )
@@ -222,7 +220,7 @@
 ;(define (up2 n) (if (<= n 0) (list 0) (cons 0 (up2 (- n 1)) ) ))
 
 
-#;(define (circle? xs ys Γ)
+(define (circle? xs ys Γ)
   (if (null? xs)
       #f
       (or (elem? (car xs) ys)
@@ -252,18 +250,18 @@
   )
         
 
-#;(define Γ-test-0 '( (A #t ())
+(define Γ-test-0 '( (A #t ())
                     (B #f ())
                     (C #t ())
                     (D #t ()) ) )
-#;(define Δ-test-0 (initΔ-1 '(A B C D) ) ) 
-#;(define g '((A #t ()) (B #t (A C)) (C #t (A))) )
+(define Δ-test-0 (initΔ-1 '(A B C D) ) ) 
+(define g '((A #t ()) (B #t (A C)) (C #t (A))) )
 
-#;(define g2 '( (A #f ())  (B #f ()) (C #t ()) ) )
-#;(define g2-1 '((A #f (B C)) (B #f ()) (C #t ())) )
-#;(define d2-1 '#hash((A . (A)) (B . (A B)) (C . (A C))) )
+(define g2 '( (A #f ())  (B #f ()) (C #t ()) ) )
+(define g2-1 '((A #f (B C)) (B #f ()) (C #t ())) )
+(define d2-1 '#hash((A . (A)) (B . (A B)) (C . (A C))) )
 
-#;(define g1 '((A #t (B)) (B #t (A C)) (C #t (A))) )
+(define g1 '((A #t (B)) (B #t (A C)) (C #t (A))) )
 
 (define (sampleList list)
   (if (null? list)
@@ -279,10 +277,3 @@
                                    [peg  (gen:expr Γ Δ '(0 1 2) #f 2 )])
     (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (last peg)) #t)
   )
-
-(define-property zip-length ( [l1 (gen:list gen:natural) ]
-                              [l2 (gen:list gen:natural) ])
-    (check-equal? (length (zipWith + l1 l2)) (min (length l1) (length l2)))
-  )
-
-(check-property zip-length)

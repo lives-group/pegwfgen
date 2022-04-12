@@ -1,0 +1,1 @@
+("8.2" ta6le ("926aef558dd3ef884c3b89464cdb7be381c97948" . "dd39dce65af3dcbdced75b337d9552daa355d230") (collects #"errortrace" #"errortrace-key.rkt") (collects #"peg-gen" #"peg-gen.rkt") (collects #"peg-gen" #"peg-gen.rkt") (collects #"rackcheck" #"main.rkt") (collects #"racket" #"base.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"rackunit" #"main.rkt"))
