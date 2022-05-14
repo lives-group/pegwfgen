@@ -3,6 +3,7 @@
 (require racket/set)
 (require rackcheck)
 (require rackunit)
+(require algorithms)
 
 
 (provide gen:expr
@@ -12,14 +13,15 @@
          gen:var
          gen:symbolVar
          initΔ
-         no-left-recursion
-         obey-constraint)
+         ;no-left-recursion
+         ;obey-constraint
+         )
 
 (define myGen (make-pseudo-random-generator))
 
 (define (h n) (- n 1) )
 
-(define (gen:expr Γ Δ Σ b p)
+(define (gen:expr Γ Δ Σ b p) 
        (cond
              [(equal? p 0)  (gen:one-of (append (mkListVar Γ Δ b) 
                                                 (if b
@@ -37,6 +39,7 @@
                                                        (lambda (rb) (gen:bind (gen:expr Γ Δ Σ rb (h p))
                                                                               (lambda (t) (gen:const (mkNot t) ) ) ) ) )
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
+
                                                        (lambda (t) (gen:const (mkKle t) ) ))
                                   )]
              [(and (> p 0) (not b))  (gen:choice (gen:bind (gen:expr Γ Δ Σ #t (h p))
@@ -51,7 +54,7 @@
 )
 
 
-(define (Γ-val Γ v)
+#;(define (Γ-val Γ v)
         (if (null? Γ)
             null
             (if (eq? (car (car Γ)) v)
@@ -149,6 +152,8 @@
   )
 
 
+
+
 (define (gen:Γ  maxVars [varSize 0])
   (gen:let ([vs (gen:list (gen:symbolVar varSize) #:max-length maxVars )]
             [ts (gen:repeat gen:boolean (length vs))])
@@ -157,7 +162,7 @@
 
 (define (gen:peg maxVars maxLits maxDepth)
   (gen:let ([Γ (gen:Γ maxVars)]
-            [n (gen:integer-in 1 maxLits) ]
+            [n (gen:integer-in 0 maxLits) ]
             [Σ (gen:const (list-from-to 0 n))]
             [p (gen:integer-in 0 maxDepth)]
             [GΓ (gen:grm '∅ Γ (initΔ Γ) Σ 0 p)]
@@ -230,7 +235,7 @@
       ) )
   )
 
-(define (circled? x ys Γ)
+#;(define (circled? x ys Γ)
   (if (null? (caddr (Γ-val Γ x) ))
       #f
       (or (elem?  x ys)
@@ -265,24 +270,73 @@
 
 #;(define g1 '((A #t (B)) (B #t (A C)) (C #t (A))) )
 
-(define (sampleList list)
+#;(define (sampleList list)
   (if (null? list)
       null
       (if (>= (random 0 99) 50) (cons (car list) (sampleList (cdr list))) (sampleList (cdr list))  ))
   )
-(define-property no-left-recursion ([peg  (gen:peg 3 5 2)])
+#;(define-property no-left-recursion ([peg  (gen:peg 3 5 2)])
     (check-equal? (ormap (lambda (x) (circled? (car x) '() (last peg))) (last peg)) #f)
   )
 
-(define-property obey-constraint ( [Γ (gen:Γ 3)]
+#;(define-property obey-constraint ( [Γ (gen:Γ 3)]
                                    [Δ  (gen:const (sampleList (map car Γ ) ) ) ]
                                    [peg  (gen:expr Γ Δ '(0 1 2) #f 2 )])
     (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (last peg)) #t)
   )
-
-(define-property zip-length ( [l1 (gen:list gen:natural) ]
-                              [l2 (gen:list gen:natural) ])
-    (check-equal? (length (zipWith + l1 l2)) (min (length l1) (length l2)))
+                             
+(define-property genNats ([n (gen:integer-in 0 10)]
+                          [k (gen:integer-in 0 5)]
+                          [ln  (gen:listNat n k)])
+    (check-equal?  (length ln) (+ n 1))
   )
 
-(check-property zip-length)
+(define-property genVars ([n (gen:integer-in 0 10)]
+                          [ln  (gen:var n)])
+    (check-equal?  (string-length ln) (+ n 1))
+  )
+
+(define-property zipSz ([xs (gen:list gen:natural)]
+                        [ys (gen:list gen:natural)])
+    (check-equal?  (length (zipWith + xs ys)) (min (length xs) (length ys)))
+  )
+
+(define-property zipCons ([xs (gen:list gen:natural)]
+                          [ys (gen:list gen:natural)])
+    (check-equal?  (let ([m (min  (length xs)  (length ys))])
+                        (+ (sum (take xs m)) (sum (take ys m)))) 
+                   (sum (zipWith + xs ys))
+    )
+)
+
+
+(define (height peg)
+   (match peg
+     [(list • e1 e2) (+ 1 (max (height e1) (height e2))) ]
+     [(list / e1 e2) (+ 1 (max (height e1) (height e2))) ]
+     [(list ! e1) (+ 1 (height e1) ) ]
+     [(list * e1) (+ 1 (height e1) ) ]
+     [_ 0]
+     )
+  )
+
+(define-property pegDepth ([peg (gen:peg 10 10 4)])
+    (label!
+       (case (height (cadr peg))
+         [(0) "zero"]
+         [(1) "um"]
+         [(2) "dois"]
+         [(3) "tres"]
+         [(4) "quatro"]
+         [else "outro"]
+    ))
+    (check-equal?  (<= (height (cadr peg)) 4) #t)
+
+    )
+
+
+;(check-property genNats)
+;(check-property genVars)
+;(check-property zipSz)
+;(check-property zipCons)
+;(check-property  (make-config #:tests 1000 #:deadline (* (+ (current-inexact-milliseconds) 3600000) 24)) pegDepth)

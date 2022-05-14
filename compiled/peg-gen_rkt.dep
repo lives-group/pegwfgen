@@ -1,0 +1,1 @@
+("7.5" racket ("37816f65c3b9929d134c10d4a1c119eebf796761" . "8991f3eec7f7669051e8e8196af4300d82b4efea") (collects #"algorithms" #"main.rkt") (collects #"rackcheck" #"main.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"racket" #"set.rkt") (collects #"rackunit" #"main.rkt"))
