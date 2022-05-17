@@ -31,9 +31,9 @@ jobs:
           distribution: 'full'
           version: '8.2'
           packages: 'rackcheck' , 'algorithms'
-      #- name: Install deps
-      #  run: raco pkg install --source --skip-installed --auto
-      # Runs a single command using the runners shell
+      #  name Install deps
+      #  run raco pkg install --source --skip-installed --auto
+      #  Runs a single command using the runners shell
       
       - name: compile
         run: raco make main.rkt
