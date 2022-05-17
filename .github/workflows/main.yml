@@ -30,7 +30,7 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           version: '8.2'
-          packages: 'rackcheck'
+          packages: 'algorithms'
       # Runs a single command using the runners shell
       
       - name: compile
