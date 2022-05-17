@@ -31,7 +31,7 @@ jobs:
           distribution: 'full'
           version: '8.2'
       - name: Install deps
-        run: raco setup
+        run: raco pkg install --auto
       # Runs a single command using the runners shell
       
       - name: compile
