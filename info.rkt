@@ -4,6 +4,7 @@
                "base" "rackcheck" "rackunit"))
 (define build-deps '("cover-lib"
                      "typed-peg"
+                     "algorithms"
                      "scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/peg-gen.scrbl" ())))
 (define pkg-desc "Type safe (and thus well formed) random peg generator")
