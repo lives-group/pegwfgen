@@ -30,7 +30,8 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           version: '8.2'
-          packages: 'algorithms'
+      - name: Install pkg and dpes
+        run: raco pkg install --auto --batch
       # Runs a single command using the runners shell
       
       - name: compile
