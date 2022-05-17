@@ -13,8 +13,8 @@
          gen:var
          gen:symbolVar
          initΔ
-         ;no-left-recursion
-         ;obey-constraint
+         no-left-recursion
+         obey-constraint
          )
 
 (define myGen (make-pseudo-random-generator))
@@ -235,7 +235,7 @@
       ) )
   )
 
-#;(define (circled? x ys Γ)
+(define (circled? x ys Γ)
   (if (null? (caddr (Γ-val Γ x) ))
       #f
       (or (elem?  x ys)
@@ -270,16 +270,16 @@
 
 #;(define g1 '((A #t (B)) (B #t (A C)) (C #t (A))) )
 
-#;(define (sampleList list)
+(define (sampleList list)
   (if (null? list)
       null
       (if (>= (random 0 99) 50) (cons (car list) (sampleList (cdr list))) (sampleList (cdr list))  ))
   )
-#;(define-property no-left-recursion ([peg  (gen:peg 3 5 2)])
+(define-property no-left-recursion ([peg  (gen:peg 3 5 2)])
     (check-equal? (ormap (lambda (x) (circled? (car x) '() (last peg))) (last peg)) #f)
   )
 
-#;(define-property obey-constraint ( [Γ (gen:Γ 3)]
+(define-property obey-constraint ( [Γ (gen:Γ 3)]
                                    [Δ  (gen:const (sampleList (map car Γ ) ) ) ]
                                    [peg  (gen:expr Γ Δ '(0 1 2) #f 2 )])
     (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (last peg)) #t)
