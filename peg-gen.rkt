@@ -54,7 +54,7 @@
 )
 
 
-#;(define (Γ-val Γ v)
+(define (Γ-val Γ v)
         (if (null? Γ)
             null
             (if (eq? (car (car Γ)) v)
