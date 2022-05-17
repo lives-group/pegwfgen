@@ -30,8 +30,8 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           version: '8.2'
-      - name: Install pkg and dpes
-        run: raco pkg install --auto --batch
+      - name: Install deps
+        run: raco setup
       # Runs a single command using the runners shell
       
       - name: compile
