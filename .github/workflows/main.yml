@@ -30,8 +30,9 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           version: '8.2'
-      - name: Install deps
-        run: raco pkg install --source --skip-installed --auto
+          packages: 'rackcheck' , 'algorithms'
+      #- name: Install deps
+      #  run: raco pkg install --source --skip-installed --auto
       # Runs a single command using the runners shell
       
       - name: compile
