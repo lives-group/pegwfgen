@@ -37,5 +37,5 @@ jobs:
       # Runs a single command using the runners shell
       
       - name: compile
-        run: raco test main.rkt
+        run: raco make main.rkt; raco test main.rkt
         
