@@ -30,8 +30,9 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           version: '8.2'
-          packages: 'rackcheck'
-      # Runs a single command using the runners shell
+      - name: Install deps
+        run:  raco pkg install --auto --batch --fail-fast rackcheck;  raco pkg install --auto --batch --fail-fast algorithms
+      #  Runs a single command using the runners shell
       
       - name: compile
         run: raco make main.rkt
