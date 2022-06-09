@@ -131,5 +131,6 @@
 #;(check-property type-contexts-match)
 #;(check-property obey-constraint)
 #;(check-property no-left-recursion)
-(check-property (make-config #:tests 200000 #:deadline (* (+ (current-inexact-milliseconds) 3600000) 24)) wellformed-ford)
-
+; For experimetns uncomment line below !
+#;(check-property (make-config #:tests 200000 #:deadline (* (+ (current-inexact-milliseconds) 3600000) 24)) wellformed-ford)
+(check-property (make-config #:tests 100 #:deadline (+ (current-inexact-milliseconds) 3600000)) wellformed-ford)
