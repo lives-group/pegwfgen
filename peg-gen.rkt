@@ -1,9 +1,10 @@
 #lang racket
 
-(require racket/set)
-(require rackcheck)
-(require rackunit)
-(require algorithms)
+(require racket/set
+         rackcheck
+         rackunit
+         "gen-utils.rkt")
+
 
 
 (provide gen:expr
@@ -14,8 +15,6 @@
          gen:symbolVar
          initΔ
          Γ-val
-         no-left-recursion
-         obey-constraint
          )
 
 (define myGen (make-pseudo-random-generator))
@@ -55,14 +54,7 @@
 )
 
 
-(define (Γ-val Γ v)
-        (if (null? Γ)
-            null
-            (if (eq? (car (car Γ)) v)
-                (car Γ)
-                (Γ-val (cdr Γ) v) )
-            )
- ) 
+
 
 (define (mkListVar Γ Δ b)
      ;(display "mkListVar: GAMMA = ")
@@ -113,7 +105,7 @@
 (define (Γ-up xs y b ty)
         (cond [(null? xs) null]
               [(eq? (car (car xs)) y) (cond [(eq? (cadr (car xs)) b)  (cons (list y b (set-union ty (caddr (car xs)))) (Γ-up (rest xs) y b ty))]
-                                            [#t  (print "Inconsistency attempt to update Γ: xs=")
+                                            #;[#t  (print "Inconsistency attempt to update Γ: xs=")
                                                  (print xs)
                                                  (print "  y  = ")
                                                  (print (list y b ty))
@@ -153,8 +145,6 @@
   )
 
 
-
-
 (define (gen:Γ  maxVars [varSize 0])
   (gen:let ([vs (gen:list (gen:symbolVar varSize) #:max-length maxVars )]
             [ts (gen:repeat gen:boolean (length vs))])
@@ -174,89 +164,6 @@
   )
 
 
-(define (list-from-to l u)
-  (if (> l u)
-      null
-      (cons l (list-from-to (+ 1 l) u))
-      )
-  )
-
-(define (gen:listNat n k)
-  (if (eq? n 0) (gen:bind (gen:integer-in 0 k) (lambda (e) (gen:const (list e))) )
-      (gen:bind (gen:listNat (- n 1) k)
-                (lambda (xs) (gen:bind ( gen:integer-in 0 k)
-                                      (lambda (x) (gen:const (list* x xs)) ) ))))
-  )
-
-(define (gen:repeat g n)
-  (if (eq? n 0)
-      (gen:const null)
-      (gen:bind (gen:repeat g (- n 1) )
-                (lambda (xs) (gen:bind g
-                                       (lambda (x) (gen:const (cons x xs)) ) ))))
-  )
-
-
-(define (gen:var n)
-  (gen:map (gen:listNat n 23) (lambda (s) (list->string (map (lambda (z) (integer->char (+ z 65))) s ))  ) )
-  )
-
-(define (gen:symbolVar n)
-  (gen:map (gen:listNat n 23) (lambda (s) (string->symbol (list->string (map (lambda (z) (integer->char (+ z 65))) s )))  ) )
-  )
-
-
-#;(define (zip xs ys)
-  (cond
-       [(null? xs) null]
-       [(null? ys) null]
-       [#t (cons (list (car xs) (car ys) ) (zip (cdr xs) (cdr ys) ) )]
-  )
-)
-
-(define (zipWith func xs ys)
-  (cond
-       [(null? xs) null]
-       [(null? ys) null ]
-       [#t (cons (func (car xs) (car ys) ) (zipWith func (cdr xs) (cdr ys) ) )]
-  )
-)
-
-
-
-;(sample (gen:expr null '() '(0 1)  #f 3) 10)
-;(define (up2 n) (if (<= n 0) (list 0) (cons 0 (up2 (- n 1)) ) ))
-
-
-#;(define (circle? xs ys Γ)
-  (if (null? xs)
-      #f
-      (or (elem? (car xs) ys)
-          (circle? (append (cdr xs) (caddr (Γ-val Γ (car xs) ))) (cons (car xs) ys) Γ)
-      ) )
-  )
-
-(define (circled? x ys Γ)
-  (if (null? (caddr (Γ-val Γ x) ))
-      #f
-      (or (elem?  x ys)
-          (ormap (lambda (z) (circled? z (cons x ys) Γ)) (caddr (Γ-val Γ x))) 
-      ) )
-  )
-
-
-
-#;(define (naive-test vars Σ p n)
-     (for ([k n])
-          (let ( [ws (last (randPEG vars Σ p)) ] )
-            (if (ormap (lambda (x) (circled? (car x) '() ws))  ws )
-                (begin (display ws) (display "\n"))
-                (display "ok\n")
-                )
-            )
-      )
-  )
-        
 
 #;(define Γ-test-0 '( (A #t ())
                     (B #f ())
@@ -271,74 +178,8 @@
 
 #;(define g1 '((A #t (B)) (B #t (A C)) (C #t (A))) )
 
-(define (sampleList list)
-  (if (null? list)
-      null
-      (if (>= (random 0 99) 50) (cons (car list) (sampleList (cdr list))) (sampleList (cdr list))  ))
-  )
 
-  
-(define-property no-left-recursion ([peg  (gen:peg 3 5 2)])
-    (check-equal? (ormap (lambda (x) (circled? (car x) '() (last peg))) (last peg)) #f)
-  )
-
-(define-property obey-constraint ( [Γ (gen:Γ 3)]
-                                   [Δ  (gen:const (sampleList (map car Γ ) ) ) ]
-                                   [peg  (gen:expr Γ Δ '(0 1 2) #f 2 )])
-    (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (last peg)) #t)
-  )
-                             
-(define-property genNats ([n (gen:integer-in 0 10)]
-                          [k (gen:integer-in 0 5)]
-                          [ln  (gen:listNat n k)])
-    (check-equal?  (length ln) (+ n 1))
-  )
-
-(define-property genVars ([n (gen:integer-in 0 10)]
-                          [ln  (gen:var n)])
-    (check-equal?  (string-length ln) (+ n 1))
-  )
-
-(define-property zipSz ([xs (gen:list gen:natural)]
-                        [ys (gen:list gen:natural)])
-    (check-equal?  (length (zipWith + xs ys)) (min (length xs) (length ys)))
-  )
-
-(define-property zipCons ([xs (gen:list gen:natural)]
-                          [ys (gen:list gen:natural)])
-    (check-equal?  (let ([m (min  (length xs)  (length ys))])
-                        (+ (sum (take xs m)) (sum (take ys m)))) 
-                   (sum (zipWith + xs ys))
-    )
-)
-
-
-(define (height peg)
-   (match peg
-     [(list • e1 e2) (+ 1 (max (height e1) (height e2))) ]
-     [(list / e1 e2) (+ 1 (max (height e1) (height e2))) ]
-     [(list ! e1) (+ 1 (height e1) ) ]
-     [(list * e1) (+ 1 (height e1) ) ]
-     [_ 0]
-     )
-  )
-
-(define-property pegDepth ([peg (gen:peg 10 10 4)])
-    (label!
-       (case (height (cadr peg))
-         [(0) "zero"]
-         [(1) "um"]
-         [(2) "dois"]
-         [(3) "tres"]
-         [(4) "quatro"]
-         [else "outro"]
-    ))
-    (check-equal?  (<= (height (cadr peg)) 4) #t)
-
-    )
-
-
-;(check-property genNats)
+ 
 ;(check-property genVars)
 ;(check-property zipSz)
 ;(check-property zipCons)
