@@ -104,8 +104,10 @@
 
 (define (Γ-up xs y b ty)
         (cond [(null? xs) null]
-              [(eq? (car (car xs)) y) (cond [(eq? (cadr (car xs)) b)  (cons (list y b (set-union ty (caddr (car xs)))) (Γ-up (rest xs) y b ty))]
-                                            #;[#t  (print "Inconsistency attempt to update Γ: xs=")
+              [(eq? (car (car xs)) y) (cond [(eq? (cadr (car xs)) b)
+                                                  (cons (list y b (set-union ty (caddr (car xs))))
+                                                  (Γ-up (rest xs) y b ty))]
+                                            [#t  (print "Inconsistency attempt to update Γ: xs=")
                                                  (print xs)
                                                  (print "  y  = ")
                                                  (print (list y b ty))

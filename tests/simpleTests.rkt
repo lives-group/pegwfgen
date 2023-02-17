@@ -5,19 +5,20 @@
          "../gen-utils.rkt"
          "verf-well-formed.rkt"
          rackcheck
-         algorithms
-         typed-peg/core
-         typed-peg/typing/infer
-         typed-peg/typing/type
-         typed-peg/typing/constraint
-         typed-peg/tree
          rackunit)
 
+(provide (all-defined-out))
 
 
 (define (elem? x xs)
     (and (not (null? xs)) (or (eq? x (car xs)) (elem? x (cdr xs)) ) )
  )
+
+(define (sum xs)
+  (match xs
+     [null 0]
+     [(cons x xs) (+ x (sum xs))]
+  ))
 
 (define (circled? x ys Γ)
   (if (null? (caddr (Γ-val Γ x) ))
@@ -95,13 +96,13 @@
 
     )
 
-(check-property genVars)
-(check-property zipSz)
-(check-property zipCons)
-(check-property no-left-recursion)
-(check-property obey-constraint)
-(check-property (make-config #:tests 100) pegDepth)
-(check-property pegDepthDist)
+;(check-property genVars)
+;(check-property zipSz)
+;(check-property zipCons)
+;(check-property no-left-recursion)
+;(check-property obey-constraint)
+;(check-property (make-config #:tests 100) pegDepth)
+;(check-property pegDepthDist)
 
 
 ;(check-property  (make-config #:tests 1000 #:deadline (* (+ (current-inexact-milliseconds) 3600000) 24)) pegDepth)

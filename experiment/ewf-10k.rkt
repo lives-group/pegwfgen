@@ -7,4 +7,4 @@
          rackcheck
          rackunit)
          
-(check-property (make-config #:tests 10000 #:deadline (* (+ (current-inexact-milliseconds) 3600000) 24)) wellformed-ford)
+(check-property (make-config #:tests 10 #:deadline (* (+ (current-inexact-milliseconds) 3600000) 24)) wellformed-ford)

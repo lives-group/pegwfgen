@@ -1,0 +1,11 @@
+ 
+[elton@avellGTX pegwfgen]$ time raco  cover  tests/test-coverage.rkt peg-gen.rkt
+cover: instrumenting: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/tests/test-coverage.rkt
+cover: instrumenting: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/peg-gen.rkt
+cover: running file: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/tests/test-coverage.rkt
+cover: running file: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/peg-gen.rkt
+cover: dumping coverage info into "coverage"
+
+real    316m17,453s
+user    313m16,278s
+sys     2m23,814s
