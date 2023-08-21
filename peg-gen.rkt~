@@ -11,6 +11,7 @@
          gen:grm
          gen:Γ
          gen:peg
+         gen:peg-s
          gen:var
          gen:symbolVar
          initΔ
@@ -35,7 +36,7 @@
                                                                               (lambda (s) (gen:const  (mkAlt (car t) s) )) ) ) )
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #t (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
-                                             (gen:bind gen:boolean
+                                            #;(gen:bind gen:boolean
                                                        (lambda (rb) (gen:bind (gen:expr Γ Δ Σ rb (h p))
                                                                               (lambda (t) (gen:const (mkNot t) ) ) ) ) )
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
@@ -165,6 +166,16 @@
            )
   )
 
+(define (gen:peg-s maxVars maxLits maxDepth b)
+  (gen:let ([Γ (gen:Γ maxVars)]
+            [n (gen:integer-in 0 maxLits) ]
+            [Σ (gen:const (list-from-to 0 n))]
+            [p (gen:integer-in 0 maxDepth)]
+            [GΓ (gen:grm '∅ Γ (initΔ Γ) Σ 0 p)]
+            [e0 (gen:expr (cadr GΓ) null Σ b p)])
+           (gen:const (list (car GΓ) (car e0) (cadr GΓ)) )
+           )
+  )
 
 
 #;(define Γ-test-0 '( (A #t ())
