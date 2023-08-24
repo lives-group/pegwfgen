@@ -1,0 +1,1 @@
+("8.9" ta6le ("0e3654c9ddb98dad6ce43641121bea9c6fbcf32b" . "93578cece8af79d78000bc6ded8e480a6a09cdc5") (collects #"cover" #"main.rkt") (collects #"peg-gen" #"peg-gen.rkt") (collects #"peg-gen" #"tests" #"verf-well-formed.rkt") (collects #"rackcheck" #"main.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"rackunit" #"main.rkt"))

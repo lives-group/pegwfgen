@@ -1,0 +1,29 @@
+#lang racket
+
+
+(struct PEGFSyn
+        ( mkEps
+          mkLit
+          mkVar
+          mkNot
+          mkKle
+          mkSeq
+          mkAlt
+        )
+        #:transparent)
+
+
+
+
+(define default
+     (PEGFSyn
+      (lambda ()  (cons 'ϵ       (tyEps)))                  ;mkEps
+      (lambda (x) (cons (list x) (tyLit)))                  ;mkLit
+      (lambda (x t) (cons (string->symbol x) t))            ;mkVar
+      (lambda (e) (cons (list '! (car e)) (tyNot (cdr e)))) ;mkNot
+      (lambda (e) (cons (list '* (car e)) (tyKle (cdr e)))) ;mkKle
+      (lambda (x y) (cons (list '• (car x) (car y)) (tySeq (cdr x) (cdr y)) )) ;mkSeq
+      (lambda (x y) (cons (list '• (car x) (car y)) (tyAlt (cdr x) (cdr y)) )) ;mkAlt
+     )
+ )
+         

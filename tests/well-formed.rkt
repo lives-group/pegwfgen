@@ -2,7 +2,7 @@
 (require "verf-well-formed.rkt")
 (require rackunit)
 (require rackcheck)
-(require peg-gen)
+(require "../peg-gen.rkt")
 
 ;; Testing if the generated PEG is Well-Formed
 

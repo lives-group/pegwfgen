@@ -1,22 +1,29 @@
 #lang racket/base
 
-(require "./peg-gen.rkt")
-(require rackcheck)
-(require rackunit)
+(require "./peg-gen.rkt"
+         "./gen-utils.rkt"
+         "./tests/simpleTests.rkt"
+         rackcheck
+         rackunit)
+
 (provide (all-from-out "./peg-gen.rkt" ))
 
 (module+ test
-  
-(module+ test
-   (require rackunit)
-   (require rackcheck))
+   (require rackunit
+            rackcheck
+            "./tests/simpleTests.rkt")
  
   ;; Any code in this `test` submodule runs when this file is run using DrRacket
   ;; or with `raco test`. The code here does not run when this file is
   ;; required by another module.
 
-  (begin (check-property no-left-recursion)
-         (check-property obey-constraint))
+  (begin (check-property genVars)
+         (check-property zipSz)
+         (check-property zipCons)
+         (check-property no-left-recursion)
+         (check-property obey-constraint)
+         (check-property pegDepth)
+         (check-property pegDepthDist))
   )
 
 (module+ main

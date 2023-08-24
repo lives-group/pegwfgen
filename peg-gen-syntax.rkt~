@@ -1,0 +1,75 @@
+#lang racket
+
+(require "peg-gen-syntax-factory.rkt")
+
+(provide
+    (struct-out Eps)
+    (struct-out Lit)
+    (struct-out Var)
+    (struct-out Alt)
+    (struct-out Seq)
+    (struct-out Not)
+    (struct-out Kle)
+    PEG
+    PStructF)
+
+
+(struct PEG (nt start gamma)  #:transparent)
+(struct Eps ()                #:transparent)
+(struct Lit (chr)        #:transparent)
+(struct Var (var)        #:transparent)
+(struct Alt (left right) #:transparent)
+(struct Seq (left right) #:transparent)
+(struct Not (exp)        #:transparent)
+(struct Kle (exp)        #:transparent)
+
+(define (nt s peg)
+   (hash-ref (PEG-nt peg) s)
+  )
+
+(define (type-of s peg)
+    (cond
+      (hash-ref (PEG-gamma peg) s)
+      )
+  )
+
+(define (mkUntypedPEG nt-list start-exp)
+     (PEG (make-immutable-hash nt-list) start-exp (make-immutable-hash))
+  )
+
+(define (mktypedPEG nt-list start-exp ty-list)
+     (PEG (make-immutable-hash nt-list) start-exp (make-immutable-hash ty-list))
+  )
+
+(define (add-nt p nt exp)
+     (PEG (hash-set (PEG-nt p) nt exp) (PEG-start p) (PEG-gamma p))
+  )
+
+(define (expToStr e)
+    (match e
+      [(struct Eps ())  "ϵ" ]
+      [(struct Lit (c)) (list->string '(c)) ]
+      [(struct Var (s)) s]
+      [(struct Alt (l r)) (string-append (expToStr l) "/" (expToStr r) )]
+      [(struct Seq (l r)) (string-append (expToStr l) " " (expToStr r) )]
+      [(struct Kle (l))   (string-append (expToStr l) "*")]
+      [(struct Not (l))   (string-append "!" (expToStr l) )]
+      )
+  )
+
+(define (ntToStr xs) (map (lambda (x) (string-append (car x) (expToStr (cdr x)) ) )) )
+
+(define PStructF
+    (PEGFSyn
+      (lambda ()  (Eps) )         ;mkEps
+      (lambda (x) (Lit x ))       ;mkLit
+      (lambda (x) (Var x ))       ;mkVar
+      (lambda (e) (Not e ))       ;mkNot
+      (lambda (e) (Kle e ))       ;mkKle
+      (lambda (x y) (Seq x y)  ) ;mkSeq
+      (lambda (x y) (Alt x y)  ) ;mkAlt
+      (lambda (g nt e) (hash-set g nt e)  ) ;addRule
+      (lambda () (make-immutable-hash) )           ;mkEmptyGrm
+      (lambda (g start gamma) (PEG g start gamma) )  ;mkPEG
+     )
+  )

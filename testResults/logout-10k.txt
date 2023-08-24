@@ -1,0 +1,9 @@
+cover: instrumenting: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/experiment/ewf-10k.rkt
+cover: instrumenting: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/peg-gen.rkt
+cover: running file: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/experiment/ewf-10k.rkt
+cover: running file: /home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/peg-gen.rkt
+cover: dumping coverage info into "coverage"
+
+real	25m26,159s
+user	25m14,618s
+sys	0m10,766s
