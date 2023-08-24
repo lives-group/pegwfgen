@@ -201,6 +201,17 @@
            )
   )
 
+(define (gen:ill-peg-s maxVars maxLits maxDepth)
+    (gen:let ([Γ (gen:Γ maxVars)]
+            [n (gen:integer-in 0 maxLits) ]
+            [Σ (gen:const (list-from-to 0 n))]
+            [p (gen:integer-in 0 maxDepth)]
+            [GΓ (gen:grm ((PEGFSyn-mkEmptyGrm F)) Γ (initΔ Γ) Σ 0 p)]
+            [e0 (gen:expr (cadr GΓ) null Σ b p)])
+            (gen:const ((PEGFSyn-mkPEG F) (car GΓ) (car e0) (cadr GΓ)) )
+           )
+  )
+
 
 #;(define Γ-test-0 '( (A #t ())
                     (B #f ())

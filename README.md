@@ -60,6 +60,79 @@ the third element is a list of all nonterminals that firstly appears on the left
 the expression associated wiht the non-terminal (head set). 
 
 
+### Customizing the output
+
+The end user now can provide an structure (called a factory) that defines how the PEG should be constructed. As example of this 
+the module peg-gen-syntax.rkt contains a racket structure and its corresponding factory called PEGStructF to build PEGs.  
+This example can be set by requiring the mentioned module and then overriding the generator default factory using the .
+
+( **NOTE:** The module  peg-gen-syntax.rkt is already imported by the peg-gen module. )
+
+```racket
+> (require peg-gen/peg-gen-syntax)
+> (setSynFactory PEGStructF)
+> (sample (gen:peg 2 2 2) 3)
+(list
+ (PEG '#hash() (Not (Seq (Lit 0) (Eps))) '())
+ (PEG '#hash() (Alt (Seq (Eps) (Lit 1)) (Not (Eps))) '())
+ (PEG '#hash() (Kle (Lit 0)) '()))
+```
+
+To define a custom output, the user can require the module peg-gen/peg-gen-syntax-factory
+and fill PEGFSyn structure with the appropriated constructors. Consider the definition of
+the previous used output structure as an example: 
+
+```racket
+(require "peg-gen-syntax-factory.rkt")
+
+(struct GPEG (nt start gamma)  #:transparent)
+(struct GEps ()                #:transparent)
+(struct GLit (chr)        #:transparent)
+(struct GVar (var)        #:transparent)
+(struct GAlt (left right) #:transparent)
+(struct GSeq (left right) #:transparent)
+(struct GNot (exp)        #:transparent)
+(struct GKle (exp)        #:transparent)
+
+(define (add-nt p nt exp)
+     (GPEG (hash-set (GPEG-nt p) nt exp) (GPEG-start p) (GPEG-gamma p))
+  )
+
+(define PEGStructF
+    (PEGFSyn
+      (lambda ()  (GEps) )         ;mkEps
+      (lambda (x) (GLit x ))       ;mkLit
+      (lambda (x) (GVar x ))       ;mkVar
+      (lambda (e) (GNot e ))       ;mkNot
+      (lambda (e) (GKle e ))       ;mkKle
+      (lambda (x y) (GSeq x y)  ) ;mkSeq
+      (lambda (x y) (GAlt x y)  ) ;mkAlt
+      (lambda (g nt e) (hash-set g nt e)  )          ;addRule
+      (lambda () (make-immutable-hash) )             ;mkEmptyGrm
+      (lambda (g start gamma) (GPEG g start gamma) ) ;mkPEG
+     )
+  )
+
+ ```
+
+### Generating ill-typed PEGs (Experimental)
+
+This version contains tow main functions to generate ill-typed PEGs (PEGs that may loop)
+Some non-terminals may be intentionally made ill-type, those have their respective types 
+define as the symbol 'ill-typed instead of having an actual type. 
+ 
+```racket
+> (sample (gen:ill-peg 2 2 2) 3)
+(list
+ (PEG '#hash() (Seq (Kle (Eps)) (Lit 2)) '())
+ (PEG (hash 'X (Lit 1)) (Kle (Eps)) (list (cons 'X (TyPEG #f '()))))
+ (PEG
+  (hash 'C (Seq (Lit 0) (Var 'T)) 'T (Var 'T))
+  (Seq (Eps) (Lit 1))
+  (list '(T . ill-typed) (cons 'C (TyPEG #f '())))))
+```
+The two first PEGs are ill-typed because of (Kle (Eps)). The last the Non-terminal T is left-recursive. 
+
 # Tests
 
 This library has its own raccheck tests that are executed by the raco test command line. 

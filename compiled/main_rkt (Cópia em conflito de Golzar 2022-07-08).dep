@@ -1,1 +1,0 @@
-("7.5" racket ("926aef558dd3ef884c3b89464cdb7be381c97948" . "14228d6ffa14864f1efbe89473634e670a10505a") #"/home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/./peg-gen.rkt" #"/home/elton/Dropbox/Devel/Leo-APEG/pegwfgen/peg-gen.rkt" (collects #"rackcheck" #"main.rkt") (collects #"racket" #"base.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"rackunit" #"main.rkt"))

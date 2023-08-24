@@ -5,11 +5,11 @@
 (require "../peg-gen.rkt"
          "../tests/verf-well-formed.rkt"
          rackcheck
-         typed-peg/core
-         typed-peg/typing/infer
-         typed-peg/typing/type
-         typed-peg/typing/constraint
-         typed-peg/tree
+         ;typed-peg/core
+         ;typed-peg/typing/infer
+         ;typed-peg/typing/type
+         ;typed-peg/typing/constraint
+         ;typed-peg/tree
          rackunit)
 
 

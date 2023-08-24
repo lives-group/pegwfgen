@@ -3,18 +3,30 @@
 (require racket/set
          rackcheck
          rackunit
-         "gen-utils.rkt")
+         "peg-gen-syntax-factory.rkt"
+         "peg-gen-types.rkt"
+         "gen-utils.rkt"
+         "peg-gen-syntax.rkt")
 
 (provide gen:expr
          gen:grm
          gen:Γ
          gen:peg
          gen:peg-s
+         gen:ill-peg
+         gen:ill-peg-s
          gen:var
          gen:symbolVar
          initΔ
          Γ-val
+         setSynFactory
          )
+
+(define F defaultFactory)
+
+(define (setSynFactory f)
+   (set! F f)
+  )
 
 (define myGen (make-pseudo-random-generator))
 
@@ -24,37 +36,92 @@
        (cond
              [(equal? p 0)  (gen:one-of (append (mkListVar Γ Δ b) 
                                                 (if b
-                                                    (list (list 'ε #t '()) )
-                                                    (map (lambda (x) (list x #f '())) Σ) )
+                                                    (list (cons ((PEGFSyn-mkEps F)) (tyEps)) ) 
+                                                    (map mkTer Σ) )
                                          )) ]
              [(and (> p 0) b)    (gen:choice (gen:bind (gen:expr Γ Δ Σ b (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ b (h p))
-                                                                              (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
+                                                                              (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
                                              (gen:bind (gen:tuple (gen:expr Γ Δ Σ #t (h p)) gen:boolean)
-                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (cadr t) (h p))
-                                                                              (lambda (s) (gen:const  (mkAlt (car t) s) )) ) ) )
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (cdr t) (h p))
+                                                                              (lambda (s) (gen:const  (mk-Alt (car t) s) )) ) ) )
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
-                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #t (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
-                                            #;(gen:bind gen:boolean
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #t (h p))
+                                                                              (lambda (s) (gen:const  (mk-Alt t s) )) ) ) )
+                                            (gen:bind gen:boolean
                                                        (lambda (rb) (gen:bind (gen:expr Γ Δ Σ rb (h p))
-                                                                              (lambda (t) (gen:const (mkNot t) ) ) ) ) )
+                                                                              (lambda (t) (gen:const (mk-Not t) ) ) ) ) )
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
-
-                                                       (lambda (t) (gen:const (mkKle t) ) ))
+                                                       (lambda (t) (gen:const (mk-kle t) ) ))
                                   )]
              [(and (> p 0) (not b))  (gen:choice (gen:bind (gen:expr Γ Δ Σ #t (h p))
-                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p)) (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                                              (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
                                                  (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                            (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (car (sample gen:boolean 1 myGen)) (h p))
-                                                                                  (lambda (s) (gen:const  (mkSeq t s) ) ) ) ) )
+                                                                                  (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
                                                  (gen:bind (gen:expr Γ Δ Σ #f (h p))
-                                                           (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p)) (lambda (s) (gen:const  (mkAlt t s) )) ) ) )
+                                                           (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                                                  (lambda (s) (gen:const  (mk-Alt t s) )) ) ) )
                                   )]
            )  
 )
 
 
+(define (gen:ill-expr Γ Δ Σ b p) 
+    (cond
+         [(<= p 1)  (gen:bind (gen:one-of Σ)
+                                          (lambda (ch) (gen:one-of (append (mk-illListVar Γ Δ b) 
+                                                                      (if b
+                                                                        (list (mkEvil))
+                                                                        (list (mk-Seq (mkEvil) (mkTer ch))) )))))] 
+         [(and (> p 1) b)    (gen:choice (gen:bind (gen:expr Γ Δ Σ b (h p))
+                                                   (lambda (t)  (gen:const  (mk-kle t) ) ) )
+                                         (gen:bind (gen:ill-expr Γ Δ Σ b (h p))
+                                                   (lambda (t)  (gen:bind (gen:expr Γ Δ Σ b (h p))
+                                                                          (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
+                                         (gen:bind (gen:expr Γ Δ Σ b (h p))
+                                                   (lambda (t)  (gen:bind (gen:ill-expr Γ Δ Σ b (h p))
+                                                                          (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
+                                         (gen:bind (gen:tuple (gen:ill-expr Γ Δ Σ #t (h p)) gen:boolean)
+                                                   (lambda (t)  (gen:bind (gen:expr Γ Δ Σ (cdr t) (h p))
+                                                                              (lambda (s) (gen:const  (mk-Alt (car t) s) )) ) ) )
+                                         (gen:bind (gen:tuple (gen:expr Γ Δ Σ #t (h p)) gen:boolean)
+                                                   (lambda (t)  (gen:bind (gen:ill-expr Γ Δ Σ (cdr t) (h p))
+                                                                              (lambda (s) (gen:const  (mk-Alt (car t) s) )) ) ) )
+                                         (gen:bind gen:boolean
+                                                   (lambda (rb) (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
+                                                                          (lambda (t) (gen:const (mk-Not t) ) ) ) ) )
+                              )]
+         [(and (> p 1) (not b))  (gen:choice (gen:bind (gen:ill-expr Γ Δ Σ #t (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                                              (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
+                                             (gen:bind (gen:expr Γ Δ Σ #t (h p))
+                                                       (lambda (t)  (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
+                                                                              (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
+                                             (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ null Σ (car (sample gen:boolean 1 myGen)) (h p))
+                                                                              (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
+                                             (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                       (lambda (t)  (gen:bind (gen:ill-expr Γ null Σ (car (sample gen:boolean 1 myGen)) (h p))
+                                                                              (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
+                                             (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                       (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p))
+                                                                              (lambda (s) (gen:const  (mk-Alt t s) )) ) ) )
+                                             (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
+                                                       (lambda (t)  (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
+                                                                              (lambda (s) (gen:const  (mk-Alt t s) )) ) ) )
+                              )]
+        )  
+)
 
+
+(define (mk-illListVar Γ Δ b)
+     (map (lambda (y) (cons ((PEGFSyn-mkVar F) (car y))
+                            (customTy (nullable? (cdr y)) null ) ))
+          (filter (lambda (x) (and (eq? (nullable? (cdr x)) b) (member (car x) Δ)) ) Γ)
+     )
+ )
 
 (define (mkListVar Γ Δ b)
      ;(display "mkListVar: GAMMA = ")
@@ -62,64 +129,103 @@
      ;(display "\nmkListVar: DELTA = ")
      ;(display Δ)
      ;(display "\n")
-     (map (lambda (y) (list (car y) (cadr y) (set-union (caddr y) (list (car y)) ) ))
-          (filter (lambda (x) (and (eq? (cadr x) b) (not (member (car x) Δ))) ) Γ)
+     (map (lambda (y) (cons ((PEGFSyn-mkVar F) (car y))
+                            (insNT (cdr y) (car y)) ))
+          (filter (lambda (x) (and (eq? (nullable? (cdr x)) b) (not (member (car x) Δ))) ) Γ)
      )
  )
 
-(define (mkSeq e1 e2)
-        (list `(• ,(car e1) ,(car e2)) (and (cadr e1) (cadr e2)) ( if (cadr e1)
-                                                                      (set-union (caddr e1) (caddr e2))
-                                                                      (caddr e1)
-                                                                      ) )
+
+(define (mkEvil)
+   (cons ((PEGFSyn-mkKle F) ((PEGFSyn-mkEps F)))
+          (tyEps) )
+  )
+
+
+(define (mkTer e)
+   (cons ((PEGFSyn-mkLit F) e) (tyLit) )
+  )
+
+(define (mk-Seq e1 e2)
+        (cons ((PEGFSyn-mkSeq F) (car e1) (car e2))
+              (tySeq (cdr e1) (cdr e2)))
 )
 
-(define (mkAlt e1 e2)
-        (list `(/ ,(car e1) ,(car e2)) (or (cadr e1) (cadr e2)) (set-union (caddr e1) (caddr e2) ) )
+(define (mk-Alt e1 e2)
+        (cons ((PEGFSyn-mkAlt F) (car e1) (car e2))
+              (tyAlt (cdr e1) (cdr e2)))
 )
 
-(define (mkKle e1)
-        (list `(* ,(car e1) ) #t (caddr e1) )
+(define (mk-kle e1)
+        (cons ((PEGFSyn-mkKle F) (car e1)) 
+              (tyKle (cdr e1) ))
 )
 
-(define (mkNot e1 )
-        (list `(! ,(car e1) ) #t ( caddr e1 ) )
+(define (mk-Not e1)
+        (cons ((PEGFSyn-mkNot F) (car e1))
+              (tyNot (cdr e1 )) )
 )
 
 ; (gen:grm (list (car x) (car t) G)  (Γ-up Γ (car x) (cadr t) (caddr t))  (Δ-up-old Δ x t) Σ (+ n 1) pmax))
+
 (define (gen:grm G Γ Δ Σ n pmax)
        (if (>= n (length Γ))
               (gen:const (list G Γ))
               (gen:let ([x   (gen:const (list-ref Γ n))]
                         [Δ_x (gen:const (hash-ref Δ (car x)) )]
-                        [t   (gen:expr Γ Δ_x Σ (cadr x) pmax) ])            
-                       (gen:grm (list (car x) (car t) G)
-                                (Γ-up Γ (car x) (cadr t) (caddr t))
-                                (batch-update Δ Γ (car x) (caddr t)) Σ (+ n 1) pmax)
+                        [t   (gen:expr Γ Δ_x Σ (nullable? (cdr x)) pmax) ])
+                        (gen:grm ((PEGFSyn-addRule F) G (car x) (car t))
+                                ;Γ
+                                (Γ-up Γ (car x) (nullable? (cdr t)) (headSet (cdr t)))
+                                (batch-update Δ Γ (car x) (headSet (cdr t))) Σ (+ n 1) pmax)
               )
         )
  )
 
-(define (Γ-item-up x y)
-        (list (car x) (cadr x) (set-union (caddr x) y ))
+
+(define (gen:ill-grm ill-list G Γ Δ Σ n pmax)
+       (if (>= n (length Γ))
+              (gen:const (list G Γ ill-list))
+              (gen:let ([x   (gen:const (list-ref Γ n))]
+                        [Δ_x (gen:const (hash-ref Δ (car x)) )]
+                        [nwf gen:boolean]
+                        [t   (if nwf
+                                 (gen:ill-expr Γ Δ_x Σ (nullable? (cdr x)) pmax)
+                                 (gen:expr Γ Δ_x Σ (nullable? (cdr x)) pmax))])
+                        (gen:ill-grm
+                                 (if nwf (cons (car x) ill-list) ill-list)
+                                 ((PEGFSyn-addRule F) G (car x) (car t))
+                                ;Γ
+                                (Γ-up Γ (car x) (nullable? (cdr t)) (headSet (cdr t)))
+                                (batch-update Δ Γ (car x) (headSet (cdr t))) Σ (+ n 1) pmax)
+              )
+        )
+ )
+
+
+; Γ-item ( [NonTerminal : Symbol] [null : Boolean] [headset : Listof Symbol]  )
+(define (Γ-item-up x hs)
+        (cons (car x) (union-headset (cdr x) hs ))
   )
 
-(define (Γ-up xs y b ty)
+(define (Γ-up xs nt b ty)
         (cond [(null? xs) null]
-              [(eq? (car (car xs)) y) (cond [(eq? (cadr (car xs)) b)
-                                                  (cons (list y b (set-union ty (caddr (car xs))))
-                                                  (Γ-up (rest xs) y b ty))]
+              [(eq? (car (car xs)) nt) (cond [(eq? (nullable? (cdr (car xs))) b)
+                                                  (cons
+                                                   (cons (car (car xs)) (union-headset (cdr (car xs)) ty))
+                                                   (Γ-up (rest xs) nt b ty))
+                                               ]
                                             [#t  (print "Inconsistency attempt to update Γ: xs=")
                                                  (print xs)
                                                  (print "  y  = ")
-                                                 (print (list y b ty))
+                                                 (print (list nt b ty))
                                                  (print " attempt to update head nullable field with ")
                                                  (println b)
                                                  (rest xs)
                                              ] 
                                       )] 
-              [(member y (caddr (car xs)) )  (cons (Γ-item-up (car xs) ty) (Γ-up (rest xs) y b ty))]
-              [#t (cons (car xs) (Γ-up (rest xs) y b ty)) ]
+              [(in-headset? (cdr (car xs)) nt )  (cons (Γ-item-up (car xs) ty) (Γ-up (rest xs) nt b ty))]
+              [else (cons (car xs) (Γ-up (rest xs) nt b ty)) ]
         )
   )
 
@@ -133,11 +239,11 @@
    (foldr (lambda (Γval Δ)
                   (hash-update Δ key (lambda (hval) (set-union (list (car Γval) var) hval)) null) ) 
          ( hash-update Δ key (lambda (hv) (set-union hv (list var) ) ) )
-         (filter (lambda (ΓEntry) (elem? var (caddr ΓEntry) ) ) Γ) ) )
+         (filter (lambda (ΓEntry) (in-headset?  (cdr ΓEntry) var) ) Γ) ) )
 
 
 (define (initΔ Γ)
-  (foldr (lambda (t Δ) (batch-update Δ Γ (car t) (caddr t) )) (initΔ-1 (map car Γ))  Γ)  
+  (foldr (lambda (t Δ) (batch-update Δ Γ (car t) (headSet (cdr t)) )) (initΔ-1 (map car Γ))  Γ)  
  ) 
 
 (define (batch-update Δ Γ var list-var)
@@ -152,7 +258,7 @@
 (define (gen:Γ  maxVars [varSize 0])
   (gen:let ([vs (gen:list (gen:symbolVar varSize) #:max-length maxVars )]
             [ts (gen:repeat gen:boolean (length vs))])
-           (gen:const (zipWith (lambda (v b) (list v b null) ) (remove-duplicates vs) ts ) ))
+           (gen:const (zipWith (lambda (v b) (cons v (customTy b null) )) (remove-duplicates vs) ts) ))
   )
 
 (define (gen:peg maxVars maxLits maxDepth)
@@ -160,10 +266,10 @@
             [n (gen:integer-in 0 maxLits) ]
             [Σ (gen:const (list-from-to 0 n))]
             [p (gen:integer-in 0 maxDepth)]
-            [GΓ (gen:grm '∅ Γ (initΔ Γ) Σ 0 p)]
+            [GΓ (gen:grm ((PEGFSyn-mkEmptyGrm F)) Γ (initΔ Γ) Σ 0 p)]
             [b gen:boolean ]
             [e0 (gen:expr (cadr GΓ) null Σ b p)])
-           (gen:const (list (car GΓ) (car e0) (cadr GΓ)) )
+            (gen:const ((PEGFSyn-mkPEG F) (car GΓ) (car e0) (cadr GΓ)) )
            )
   )
 
@@ -172,9 +278,48 @@
             [n (gen:integer-in 0 maxLits) ]
             [Σ (gen:const (list-from-to 0 n))]
             [p (gen:integer-in 0 maxDepth)]
-            [GΓ (gen:grm '∅ Γ (initΔ Γ) Σ 0 p)]
+            [GΓ (gen:grm ((PEGFSyn-mkEmptyGrm F)) Γ (initΔ Γ) Σ 0 p)]
             [e0 (gen:expr (cadr GΓ) null Σ b p)])
-           (gen:const (list (car GΓ) (car e0) (cadr GΓ)) )
+            (gen:const ((PEGFSyn-mkPEG F) (car GΓ) (car e0) (cadr GΓ)) )
+           )
+  )
+
+(define (mark-ill-typed Γ ills)
+     (foldr (lambda (p xs)
+              (if (member (car p) ills)
+                  (cons (cons (car p) 'ill-typed) xs)
+                  (cons p xs)
+                  ))
+            null
+            Γ)
+  )
+
+(define (gen:ill-peg-s maxVars maxLits maxDepth b)
+  (gen:let ([Γ (gen:Γ maxVars)]
+            [n (gen:integer-in 0 maxLits) ]
+            [Σ (gen:const (list-from-to 0 n))]
+            [p (gen:integer-in 0 maxDepth)]
+            [GΓI (gen:ill-grm null ((PEGFSyn-mkEmptyGrm F)) Γ (initΔ Γ) Σ 0 p)]
+            [e0 (if (null? (caddr GΓI))
+                    (gen:ill-expr (cadr GΓI) null Σ b p)
+                    (gen:expr (cadr GΓI) null Σ b p))])
+            (gen:const ((PEGFSyn-mkPEG F) (car GΓI) (car e0) (mark-ill-typed (cadr GΓI) (caddr GΓI)) ))
+           )
+  )
+
+
+
+(define (gen:ill-peg maxVars maxLits maxDepth)
+  (gen:let ([Γ (gen:Γ maxVars)]
+            [n (gen:integer-in 0 maxLits) ]
+            [Σ (gen:const (list-from-to 0 n))]
+            [p (gen:integer-in 0 maxDepth)]
+            [GΓI (gen:ill-grm null ((PEGFSyn-mkEmptyGrm F)) Γ (initΔ Γ) Σ 0 p)]
+            [b gen:boolean ]
+            [e0 (if (null? (caddr GΓI))
+                    (gen:ill-expr (cadr GΓI) null Σ b p)
+                    (gen:expr (cadr GΓI) null Σ b p))])
+            (gen:const ((PEGFSyn-mkPEG F) (car GΓI) (car e0) (mark-ill-typed (cadr GΓI) (caddr GΓI)) ))
            )
   )
 
