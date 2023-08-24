@@ -235,13 +235,13 @@ As an second example, here is the definition of the factory for that structure:
 
 The module that defines this data type also define some pretty print functions:
 
-@defproc[( peg->string  [GPEG GPEG?])
+@defproc[( gpeg->string  [GPEG GPEG?])
                    String?]{
       Converts a PEG into a string. 
 }
 
 
-@defproc[(pexp->string  [exp any?])
+@defproc[(gpexp->string  [exp any?])
                    String?]{
       Converts a parse expression into a string. 
 }

@@ -11,8 +11,8 @@
     (struct-out GNot)
     (struct-out GKle)
     (struct-out GPEG)
-    gpeg->string
-    gpexp->string
+    peg->string
+    pexp->string
     PEGStructF)
 
 
@@ -76,10 +76,10 @@
 
 (define (nt->str xs) (map (lambda (x) (string-append (car x) (expr-prec->string 0 (cdr x)) ) )) )
 
-(define (gpexp->string e ) 
+(define (pexp->string e ) 
     (expr-prec->string 0 e))
 
-(define (gpeg->string e ) 
+(define (peg->string e ) 
     (append (hash-map (GPEG-nt e)
                       (lambda (s exp) (string-append s "<-" (expr-prec->string 0 exp) "\n")) )
             (list (expr-prec->string 0 (GPEG-start e)))
