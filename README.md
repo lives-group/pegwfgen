@@ -117,7 +117,7 @@ the previous used output structure as an example:
 
 ### Generating ill-typed PEGs (Experimental)
 
-This version contains tow main functions to generate ill-typed PEGs (PEGs that may loop)
+This version contains tow new main functions to generate ill-typed PEGs (PEGs that may loop)
 Some non-terminals may be intentionally made ill-type, those have their respective types 
 define as the symbol 'ill-typed instead of having an actual type. 
  
