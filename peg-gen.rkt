@@ -278,10 +278,45 @@
             [n (gen:integer-in 0 maxLits) ]
             [Σ (gen:const (list-from-to 0 n))]
             [p (gen:integer-in 0 maxDepth)]
+
             [GΓ (gen:grm ((PEGFSyn-mkEmptyGrm F)) Γ (initΔ Γ) Σ 0 p)]
             [e0 (gen:expr (cadr GΓ) null Σ b p)])
             (gen:const ((PEGFSyn-mkPEG F) (car GΓ) (car e0) (cadr GΓ)) )
            )
+
+           )
+  )
+
+(define (list-from-to l u)
+  (if (> l u)
+      null
+      (cons l (list-from-to (+ 1 l) u))
+      )
+  )
+
+(define (gen:listNat n k)
+  (if (eq? n 0) (gen:bind (gen:integer-in 0 k) (lambda (e) (gen:const (list e))) )
+      (gen:bind (gen:listNat (- n 1) k)
+                (lambda (xs) (gen:bind ( gen:integer-in 0 k)
+                                      (lambda (x) (gen:const (list* x xs)) ) ))))
+  )
+
+(define (gen:repeat g n)
+  (if (eq? n 0)
+      (gen:const null)
+      (gen:bind (gen:repeat g (- n 1) )
+                (lambda (xs) (gen:bind g
+                                       (lambda (x) (gen:const (cons x xs)) ) ))))
+  )
+
+
+(define (gen:var n)
+  (gen:map (gen:listNat n 23) (lambda (s) (list->string (map (lambda (z) (integer->char (+ z 65))) s ))  ) )
+  )
+
+(define (gen:symbolVar n)
+  (gen:map (gen:listNat n 23) (lambda (s) (string->symbol (list->string (map (lambda (z) (integer->char (+ z 65))) s )))  ) )
+
   )
 
 (define (mark-ill-typed Γ ills)
