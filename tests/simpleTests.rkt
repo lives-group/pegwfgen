@@ -3,6 +3,7 @@
 (require cover)
 (require "../peg-gen.rkt"
          "../gen-utils.rkt"
+         "../peg-gen-types.rkt"
          "verf-well-formed.rkt"
          rackcheck
          rackunit)
@@ -21,10 +22,10 @@
   ))
 
 (define (circled? x ys Γ)
-  (if (null? (caddr (Γ-val Γ x) ))
+  (if (null? (headSet (cdr (Γ-val Γ x) )))
       #f
       (or (elem?  x ys)
-          (ormap (lambda (z) (circled? z (cons x ys) Γ)) (caddr (Γ-val Γ x))) 
+          (ormap (lambda (z) (circled? z (cons x ys) Γ)) (headSet (cdr (Γ-val Γ x) ))) 
       ) )
   )
 
@@ -42,7 +43,7 @@
 (define-property obey-constraint ( [Γ (gen:Γ 3)]
                                    [Δ  (gen:const (sampleList (map car Γ ) ) ) ]
                                    [peg  (gen:expr Γ Δ '(0 1 2) #f 2 )])
-    (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (last peg)) #t)
+    (check-equal? (foldr (lambda (e rb) (and (not (elem? e Δ)) rb) ) #t (headSet (cdr peg))) #t)
   )
                              
 (define-property genVars ([n (gen:integer-in 0 10)]
