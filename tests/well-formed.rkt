@@ -18,12 +18,13 @@
 
 
 ;(check-property wellformed-ford)
-;(check-property (make-config #:tests 20) wellformed-ford)
+
 (define-property wellformed-ford ([peg  (gen:peg 3 5 2)])
     (check-equal?  (is-WF (getGrammar peg) (getExpression peg) '()) #t)
   )
 
-(make-config #:tests 10)
+
+;(make-config #:tests 10)
 
 #;(define (allTypesMatch g g1 )
    (andmap (lambda (t) (matchTypes t (assoc (car t) g) )) g1)

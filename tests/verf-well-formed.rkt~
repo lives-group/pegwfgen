@@ -27,7 +27,7 @@
  ;; e ⇀ f then e might fail on some input
 (define (⇀ grammar e [nts '()])
   (match e
-    ['ϵ '(0)]
+    ['ε '(0)]
     [(list '/ e1 e2) (let* ([r1 (⇀ grammar e1 nts)]
                             [r2 (⇀ grammar e2 nts)])
                        (if (⇀f? r1) 
@@ -75,26 +75,27 @@
 ;; Well-Formed Grammars
 
 (define (is-WF grammar e non-terminal) ;; (grammar expression non-terminal)
-  (cond
-    [(list? e) (let ([id (car e)])
-                    (cond [(eq? id '/)  (and (is-WF grammar (cadr e) non-terminal) (is-WF grammar (caddr e) non-terminal))] 
-                          [(eq? id '•)  (and (is-WF grammar (cadr e) non-terminal)
-                                             (or (not (member '0 (⇀ grammar (cadr e))))
-                                                 (is-WF grammar (caddr e) non-terminal))
+  (if (list? e)
+      (let ((id (car e)))
+        (cond [(eq? id '/)  (and (is-WF grammar (cadr e) non-terminal) (is-WF grammar (caddr e) non-terminal))] 
+              [(eq? id '•)  (and (is-WF grammar (cadr e) non-terminal)
+                                 (or (not (member '0 (⇀ grammar (cadr e))))
+                                     (is-WF grammar (caddr e) non-terminal))
                                  )]
-                          [(eq? id '!)  (is-WF grammar (cadr e) non-terminal)]
-                          [(eq? id '*)  (and (not (member '0 (⇀ grammar (cadr e)))) 
-                                        (is-WF grammar (cadr e) non-terminal))]
-                          [else   #f] 
+              [(eq? id '!)  (is-WF grammar (cadr e) non-terminal)]
+              [(eq? id '*)  (and (not (member '0 (⇀ grammar (cadr e)))) 
+                                 (is-WF grammar (cadr e) non-terminal))]
+              [else  #f] 
               )
-        )]
-       [(number? e)    #t]
-       [(equal? e 'ϵ)  #t]
-       [(not (equal? grammar '∅)) (if (member e non-terminal)
+        )
+      (cond [(number? e) #t]
+            [(eq? e 'ε)  #t]
+            [(not (eq? grammar '∅)) (if (member e non-terminal)
                                         #f
                                         (is-WF grammar (lookup-nt grammar e) (cons e non-terminal)))] 
-       [else  #f]
+            [else  #f]
             )
       )
  
+  )
 
