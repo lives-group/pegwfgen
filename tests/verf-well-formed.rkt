@@ -21,6 +21,13 @@
       s
       '()))
 
+
+(define (nt-list grm)
+  (match grm
+    ['∅ null]
+    [(list s e g) (cons s (nt-list g))]
+    [_ null])
+  )
 ;; Analysis of Grammars
  ;; e ⇀ 1 then e might succeed while consuming at least one terminal
  ;; e ⇀ 0 then e might succeed on some input string while consuming no input
@@ -31,7 +38,7 @@
     [(list '/ e1 e2) (let* ([r1 (⇀ grammar e1 nts)]
                             [r2 (⇀ grammar e2 nts)])
                        (if (⇀f? r1) 
-                           (append r2 (remove 'f r1))
+                           (set-union r2 (remove 'f r1))
                            r1))]
     [(list '• e1 e2) (let* ([r1 (⇀ grammar e1 nts)]
                             [r2 (⇀ grammar e2 nts)])
@@ -74,7 +81,7 @@
 
 ;; Well-Formed Grammars
 
-(define (is-WF grammar e non-terminal) ;; (grammar expression non-terminal)
+#;(define (is-WF grammar e non-terminal) ;; (grammar expression non-terminal)
   (cond
     [(list? e) (let ([id (car e)])
                     (cond [(eq? id '/)  (and (is-WF grammar (cadr e) non-terminal) (is-WF grammar (caddr e) non-terminal))] 
@@ -97,4 +104,59 @@
             )
       )
  
+#;(define (is-WF-exp grammar e non-terminal) ;; (grammar expression non-terminal)
+  (match e
+    ['ϵ  #t]
+    [(list '/ l r)  (and (is-WF-exp grammar l non-terminal) (is-WF-exp grammar r non-terminal))] 
+    [(list '• l r)  (and (is-WF-exp grammar l non-terminal)
+                           (or (not (member '0 (⇀ grammar l)))
+                               (is-WF-exp grammar r non-terminal)
+                               ))]
+    [(list '! x)    (is-WF-exp grammar x non-terminal)]
+    [(list '* x)    (and (not (member '0 (⇀ grammar  x))) 
+                         (is-WF-exp grammar x non-terminal))]          
+    [(? number? _)    #t]
+    
+    [(? symbol? x) (if (member x non-terminal)
+                       #f
+                       (is-WF-exp grammar (lookup-nt grammar x) (cons x non-terminal)))] 
+    [_  #f]
+  )
+)
 
+(define (behead x)  (if (null? x) x (cdr x)) )
+(define (slide xs ys)
+   (if (null? ys) xs (cons (car ys) xs)) )
+(define (is-WF-exp grammar e wflist non-terminal) ;; (grammar expression non-terminal)
+  (match e
+    ['ϵ  #t]
+    [(list '/ l r)  (and (is-WF-exp grammar l wflist non-terminal)
+                         (is-WF-exp grammar r wflist non-terminal))] 
+    [(list '• l r)  (and (is-WF-exp grammar l wflist non-terminal)
+                           (if (not (member '0 (⇀ grammar l)))
+                               (is-WF-exp grammar r (slide wflist non-terminal) null)
+                               (is-WF-exp grammar r wflist non-terminal)
+                               ))]
+    [(list '! x)    (is-WF-exp grammar x wflist non-terminal)]
+    [(list '* x)    (and (not (member '0 (⇀ grammar  x))) 
+                         (is-WF-exp grammar x wflist non-terminal))]          
+    [(? number? _)    #t]
+    
+    [(? symbol? x) (cond
+                    [(member x wflist)       #t]
+                    [(member x non-terminal) #f]
+                    [else (is-WF-exp grammar (lookup-nt grammar x) wflist (cons x non-terminal))])] 
+    [_  #f]
+  )
+)
+
+(define (is-WF-g grammar) ;; (grammar expression non-terminal)
+     (let ([xs (nt-list grammar)])
+         (foldr (lambda (x y) (and x y) ) #t (map (lambda (z) (is-WF-exp grammar z null null)) xs))
+       )
+)
+
+(define (is-WF grammar e) ;; (grammar expression non-terminal)
+   (and (is-WF-exp grammar e null null)
+        (is-WF-g grammar))
+)

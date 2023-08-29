@@ -20,9 +20,21 @@
 ;(check-property wellformed-ford)
 
 (define-property wellformed-ford ([peg  (gen:peg 3 5 2)])
-    (check-equal?  (is-WF (getGrammar peg) (getExpression peg) '()) #t)
+    ;(println peg)
+    (check-equal?  (is-WF (getGrammar peg) (getExpression peg)) #t)
   )
 
+(define-property null-ill-formed ([peg  (gen:ill-expr null null '(0 1 2) #t 2 )])
+    (check-equal? (is-WF '∅ (car peg) ) #f)
+  )
+
+(define-property not-null-ill-formed ([peg  (gen:ill-expr null null '(0 1 2) #f 2 )])
+    (check-equal? (is-WF '∅ (car peg) ) #f)
+  )
+
+(define-property ill-formed-ford ([peg  (gen:ill-peg 3 5 2)])
+    (check-equal?  (is-WF (getGrammar peg) (getExpression peg)) #f)
+  )
 
 ;(make-config #:tests 10)
 

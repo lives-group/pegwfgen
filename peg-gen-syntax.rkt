@@ -62,8 +62,13 @@
 (define (expr-prec->string n e ) 
     (match e
         [(struct GEps ())    "ϵ"]
-        [(struct GLit (c))    (string-append "'" (string c) "'")]
-        [(struct GVar (s))   (string-append "\"" s "\"")]
+        [(struct GLit (c))    (cond
+                                [(char? c) (string-append "'" (string c) "'")]
+                                [else (string-append "'" (~a c) "'")]) ]
+        [(struct GVar (s))    (cond
+                                [(string? s)  (string-append "\"" s "\"")]
+                                [else (~a s)]
+                                )]
         [(struct GAlt (l r)) (parens (> n 2) (string-append (expr-prec->string 2 l)
                                                            (expr-prec->string 2 r)))]
         [(struct GSeq (l r)) (parens (> n 1) (string-append (expr-prec->string 1 l) "/"
@@ -81,7 +86,7 @@
 
 (define (gpeg->string e ) 
     (append (hash-map (GPEG-nt e)
-                      (lambda (s exp) (string-append s "<-" (expr-prec->string 0 exp) "\n")) )
+                      (lambda (s exp) (string-append (~a s) "<-" (expr-prec->string 0 exp) "\n")) )
             (list (expr-prec->string 0 (GPEG-start e)))
     )
 )

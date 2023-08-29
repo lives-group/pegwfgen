@@ -120,8 +120,8 @@
 
 ;(check-property wellformed-ford)
 ;(check-property (make-config #:tests 20) wellformed-ford)
-(define-property wellformed-ford ([peg  (gen:peg 10 10 4)])
-    (check-equal?  (is-WF (getGrammar peg) (getExpression peg) '()) #t)
+(define-property wellformed-ford ([peg  (gen:peg 3 3 3)])
+    (check-equal?  (is-WF (getGrammar peg) (getExpression peg)) #t)
   )
 
 

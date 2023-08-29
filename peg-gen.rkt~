@@ -15,7 +15,6 @@
          gen:peg-s
          gen:ill-peg
          gen:ill-peg-s
-         gen:ill-expr
          gen:var
          gen:symbolVar
          initΔ
@@ -49,8 +48,9 @@
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #t (h p))
                                                                               (lambda (s) (gen:const  (mk-Alt t s) )) ) ) )
-                                            (gen:bind (gen:expr Γ Δ Σ #f (h p))
-                                                                              (lambda (t) (gen:const (mk-Not t) ) ) ) 
+                                            (gen:bind gen:boolean
+                                                       (lambda (rb) (gen:bind (gen:expr Γ Δ Σ rb (h p))
+                                                                              (lambda (t) (gen:const (mk-Not t) ) ) ) ) )
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t) (gen:const (mk-kle t) ) ))
                                   )]
@@ -67,18 +67,14 @@
            )  
 )
 
-(define g1 (list (cons 'A (TyPEG #f '())) (cons 'B (TyPEG #t '()))) )
 
 (define (gen:ill-expr Γ Δ Σ b p) 
     (cond
-         #;[(and (<= p 1) (not b))  (gen:bind (gen:expr Γ Δ Σ #f (h p))
-                                            (lambda (t)  (gen:bind (gen:ill-expr Γ null Σ (car (sample gen:boolean 1 myGen)) (h p))
-                                                                   (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )]
          [(<= p 1)  (gen:bind (gen:one-of Σ)
-                              (lambda (ch) (gen:one-of (append (mk-illListVar Γ Δ b) 
-                                                               (if b
-                                                                   (list (mkEvil))
-                                                                   (list (mk-Seq (mkTer ch) (mkEvil) )) )))))]
+                                          (lambda (ch) (gen:one-of (append (mk-illListVar Γ Δ b) 
+                                                                      (if b
+                                                                        (list (mkEvil))
+                                                                        (list (mk-Seq (mkEvil) (mkTer ch))) )))))] 
          [(and (> p 1) b)    (gen:choice (gen:bind (gen:expr Γ Δ Σ b (h p))
                                                    (lambda (t)  (gen:const  (mk-kle t) ) ) )
                                          (gen:bind (gen:ill-expr Γ Δ Σ b (h p))
@@ -93,8 +89,9 @@
                                          (gen:bind (gen:tuple (gen:expr Γ Δ Σ #t (h p)) gen:boolean)
                                                    (lambda (t)  (gen:bind (gen:ill-expr Γ Δ Σ (cdr t) (h p))
                                                                               (lambda (s) (gen:const  (mk-Alt (car t) s) )) ) ) )
-                                         (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
-                                                   (lambda (t) (gen:const (mk-Not t) ) ) ) 
+                                         (gen:bind gen:boolean
+                                                   (lambda (rb) (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
+                                                                          (lambda (t) (gen:const (mk-Not t) ) ) ) ) )
                               )]
          [(and (> p 1) (not b))  (gen:choice (gen:bind (gen:ill-expr Γ Δ Σ #t (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p))
@@ -108,7 +105,7 @@
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t)  (gen:bind (gen:ill-expr Γ null Σ (car (sample gen:boolean 1 myGen)) (h p))
                                                                               (lambda (s) (gen:const  (mk-Seq t s) ) ) ) ) )
-                                             (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
+                                             (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                                               (lambda (s) (gen:const  (mk-Alt t s) )) ) ) )
                                              (gen:bind (gen:ill-expr Γ Δ Σ #f (h p))
