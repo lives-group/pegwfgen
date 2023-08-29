@@ -3,6 +3,7 @@
 (require "./peg-gen.rkt"
          "./gen-utils.rkt"
          "./tests/simpleTests.rkt"
+         "./tests/well-formed.rkt"
          rackcheck
          rackunit)
 
@@ -23,6 +24,8 @@
          (check-property no-left-recursion)
          (check-property obey-constraint)
          (check-property pegDepth)
+         (check-property wellformed-ford)
+         (check-property ill-formed-ford)
          (check-property pegDepthDist))
   )
 

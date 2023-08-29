@@ -67,7 +67,6 @@
            )  
 )
 
-(define g1 (list (cons 'A (TyPEG #f '())) (cons 'B (TyPEG #t '()))) )
 
 (define (gen:ill-expr Γ Δ Σ b p) 
     (cond

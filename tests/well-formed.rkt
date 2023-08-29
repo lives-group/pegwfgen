@@ -4,6 +4,9 @@
 (require rackcheck)
 (require "../peg-gen.rkt")
 
+(provide wellformed-ford
+         ill-formed-ford)
+
 ;; Testing if the generated PEG is Well-Formed
 
 ;; Helpers functions to get Grammar and the Expression from gen:peg
@@ -35,6 +38,8 @@
 (define-property ill-formed-ford ([peg  (gen:ill-peg 3 5 2)])
     (check-equal?  (is-WF (getGrammar peg) (getExpression peg)) #f)
   )
+
+
 
 ;(make-config #:tests 10)
 
