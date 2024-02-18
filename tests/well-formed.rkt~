@@ -2,7 +2,10 @@
 (require "verf-well-formed.rkt")
 (require rackunit)
 (require rackcheck)
-(require peg-gen)
+(require "../peg-gen.rkt")
+
+(provide wellformed-ford
+         ill-formed-ford)
 
 ;; Testing if the generated PEG is Well-Formed
 
@@ -18,12 +21,27 @@
 
 
 ;(check-property wellformed-ford)
-;(check-property (make-config #:tests 20) wellformed-ford)
+
 (define-property wellformed-ford ([peg  (gen:peg 3 5 2)])
-    (check-equal?  (is-WF (getGrammar peg) (getExpression peg) '()) #t)
+    ;(println peg)
+    (check-equal?  (is-WF (getGrammar peg) (getExpression peg)) #t)
   )
 
-(make-config #:tests 10)
+(define-property null-ill-formed ([peg  (gen:ill-expr null null '(0 1 2) #t 2 )])
+    (check-equal? (is-WF '∅ (car peg) ) #f)
+  )
+
+(define-property not-null-ill-formed ([peg  (gen:ill-expr null null '(0 1 2) #f 2 )])
+    (check-equal? (is-WF '∅ (car peg) ) #f)
+  )
+
+(define-property ill-formed-ford ([peg  (gen:ill-peg 3 5 2)])
+    (check-equal?  (is-WF (getGrammar peg) (getExpression peg)) #f)
+  )
+
+
+
+;(make-config #:tests 10)
 
 #;(define (allTypesMatch g g1 )
    (andmap (lambda (t) (matchTypes t (assoc (car t) g) )) g1)

@@ -10,7 +10,6 @@
 
 (provide (all-defined-out))
 
-
 (define (elem? x xs)
     (and (not (null? xs)) (or (eq? x (car xs)) (elem? x (cdr xs)) ) )
  )

@@ -1,5 +1,5 @@
-641
-((3) 0 () 1 ((q lib "peg-gen/main.rkt")) () (h ! (equal) ((c def c (c (? . 0) q gen:Γ)) q (0 . 4)) ((c def c (c (? . 0) q gen:grm)) q (651 . 8)) ((c def c (c (? . 0) q pexp->string)) q (1393 . 3)) ((c def c (c (? . 0) q gen:var)) q (1167 . 3)) ((c def c (c (? . 0) q gen:symbolVar)) q (1246 . 3)) ((c def c (c (? . 0) q gen:ill-peg-s)) q (1636 . 6)) ((c def c (c (? . 0) q gen:ill-peg)) q (1453 . 5)) ((c def c (c (? . 0) q gen:peg-s)) q (448 . 6)) ((c def c (c (? . 0) q gen:peg)) q (269 . 5)) ((c def c (c (? . 0) q initΔ)) q (146 . 3)) ((c def c (c (? . 0) q gen:expr)) q (948 . 7)) ((c def c (c (? . 0) q peg->string)) q (1331 . 3))))
+643
+((3) 0 () 1 ((q lib "peg-gen/main.rkt")) () (h ! (equal) ((c def c (c (? . 0) q gen:Γ)) q (0 . 4)) ((c def c (c (? . 0) q gen:grm)) q (651 . 8)) ((c def c (c (? . 0) q gen:var)) q (1167 . 3)) ((c def c (c (? . 0) q gen:symbolVar)) q (1246 . 3)) ((c def c (c (? . 0) q gen:ill-peg-s)) q (1638 . 6)) ((c def c (c (? . 0) q gen:ill-peg)) q (1455 . 5)) ((c def c (c (? . 0) q gpexp->string)) q (1394 . 3)) ((c def c (c (? . 0) q gen:peg-s)) q (448 . 6)) ((c def c (c (? . 0) q gen:peg)) q (269 . 5)) ((c def c (c (? . 0) q gpeg->string)) q (1331 . 3)) ((c def c (c (? . 0) q initΔ)) q (146 . 3)) ((c def c (c (? . 0) q gen:expr)) q (948 . 7))))
 procedure
 (gen:Γ maxVars [#:varSize varSize]) -> gen?
   maxVars : exact-positive-integer?
@@ -40,10 +40,10 @@ procedure
 (gen:symbolVar varSize) -> gen?
   varSize : exact-positive-integer?
 procedure
-(peg->string GPEG) -> String?
+(gpeg->string GPEG) -> String?
   GPEG : GPEG?
 procedure
-(pexp->string exp) -> String?
+(gpexp->string exp) -> String?
   exp : any?
 procedure
 (gen:ill-peg maxVars maxLits maxDepth) -> gen?

@@ -49,8 +49,10 @@
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t)  (gen:bind (gen:expr Γ Δ Σ #t (h p))
                                                                               (lambda (s) (gen:const  (mk-Alt t s) )) ) ) )
-                                            (gen:bind (gen:expr Γ Δ Σ #f (h p))
-                                                                              (lambda (t) (gen:const (mk-Not t) ) ) ) 
+                                            (gen:bind gen:boolean
+                                                      (lambda (nb)
+                                                              (gen:bind (gen:expr Γ Δ Σ nb (h p))
+                                                                        (lambda (t) (gen:const (mk-Not t) ) ) ))) 
                                              (gen:bind (gen:expr Γ Δ Σ #f (h p))
                                                        (lambda (t) (gen:const (mk-kle t) ) ))
                                   )]

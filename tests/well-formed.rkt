@@ -20,6 +20,33 @@
   )
 
 
+(define (get-nt-exprs g)
+  (match g
+    ['∅ null]
+    [(list nt e g1) (cons e (get-nt-exprs g1))]
+  ) 
+)
+
+(define (contains-not-of-null? g p)
+  (match p
+    ['ϵ  #f]
+    [(list '/ l r)  (or (contains-not-of-null? g l) (contains-not-of-null? g r))] 
+    [(list '• l r)  (or (contains-not-of-null? g l)
+                         (contains-not-of-null? g r))]
+    [(list '! x)    (or (if (⇀0? (⇀ g x)) #t #f) 
+                        (contains-not-of-null? g x))]
+    [(list '* x)    (contains-not-of-null? g x)]          
+    [(? number? _)    #f]
+    
+    [(? symbol? x) (contains-not-of-null? g (lookup-nt g x))] 
+    [_  #f]
+  ) 
+)
+
+(define (grm-not-of-null? g start)
+    (cond [(eq? g '∅) #f]
+          [else (ormap (lambda (x) (contains-not-of-null? g x) ) (cons start (get-nt-exprs g)))])
+)
 ;(check-property wellformed-ford)
 
 (define-property wellformed-ford ([peg  (gen:peg 3 5 2)])
@@ -36,7 +63,10 @@
   )
 
 (define-property ill-formed-ford ([peg  (gen:ill-peg 3 5 2)])
-    (check-equal?  (is-WF (getGrammar peg) (getExpression peg)) #f)
+      (cond
+        [(is-WF (getGrammar peg) (getExpression peg)) (grm-not-of-null? (getGrammar peg)
+                                                                        (getExpression peg))]
+        [else  #t])
   )
 
 
